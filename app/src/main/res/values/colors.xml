@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Fliigo Custom Colors -->
+    <color name="dark_teal_background">#073B3A</color>
+    <color name="card_light_background">#EFEFEF</color>
+    <color name="white_card">#FFFFFF</color>
+    <color name="accent_green">#38A169</color>
+    <color name="accent_red">#D53F8C</color>
+    <color name="selected_tab_color">#0F4C4A</color>
+    <color name="text_dark">#1A202C</color>
+    <color name="text_muted">#4A5568</color>
+    <color name="accent_yellow">#FFC700</color>
+    <color name="divider_color">#CBD5E0</color>
+    <color name="date_header_background">#E2E8F0</color>
+
+    <!-- Paleta oficial unificada (Auth, Balance e Inventario) -->
+    <color name="fondo_verde">#004247</color>
+    <color name="amarillo_header">#E7B842</color>
+    <color name="botones_oscuros">#002E34</color>
+    <color name="gris_claro">#EAEAE9</color>
+    <color name="texto_oscuro">#1A1A1A</color>
+
+    <!-- Colores funcionales y estados -->
+    <color name="verde_exito">#2E7D32</color>
+    <color name="rojo_gasto">#C2185B</color>
+    <color name="gris_fondo">#F0F0F0</color>
+</resources>
