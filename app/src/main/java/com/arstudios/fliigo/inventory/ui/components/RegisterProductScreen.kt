@@ -1,10 +1,11 @@
-package com.arstudios.fliigo.inventory.ui.screens
+package com.arstudios.fliigo.inventory.ui.components
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -17,41 +18,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.arstudios.fliigo.core.ui.components.BarcodeScannerView
+import com.arstudios.fliigo.inventory.data.CategoryDto
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fn RegisterProductScreen(
-onSaveProduct: (
-id: String,
-name: String,
-salePrice: String,
-cost: String,
-stock: String,
-supplier: String,
-category: String
-) -> Unit,
-onBack: () -> Unit
+fun RegisterProductScreen(
+    categories: List<CategoryDto>,
+    onSave: (
+        name: String,
+        price: Double,
+        costPrice: Double?,
+        provider: String?,
+        stock: Int,
+        category: String?
+    ) -> Unit,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
 
     // Estados de los campos del formulario
     var productId by remember { mutableStateOf("") }
     var productName by remember { mutableStateOf("") }
-    var salePrice by remember { mutableStateOf("") }
-    var cost by remember { mutableStateOf("") }
-    var stock by remember { mutableStateOf("") }
+    var salePriceStr by remember { mutableStateOf("") }
+    var costStr by remember { mutableStateOf("") }
+    var stockStr by remember { mutableStateOf("") }
     var supplier by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
 
     // Estados de control para la cámara y categorías
     var showCameraScanner by remember { mutableStateOf(false) }
     var expandedCategoryDropdown by remember { mutableStateOf(false) }
-
-    // Lista de ejemplo de categorías (puedes adaptarla a tu base de datos)
-    val categories = listOf("General", "Bebidas", "Alimentos", "Limpieza", "Tecnología")
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Selector de imagen desde la Galería para leer código de barras
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -65,12 +66,12 @@ onBack: () -> Unit
                     .addOnSuccessListener { barcodes ->
                         for (barcode in barcodes) {
                             barcode.rawValue?.let { code ->
-                                productId = code // Rellena el ID automáticamente
+                                productId = code
                             }
                         }
                     }
                     .addOnFailureListener {
-                        // Manejar error de lectura de galería
+                        errorMessage = "No se pudo leer el código de la imagen"
                     }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -79,7 +80,6 @@ onBack: () -> Unit
     }
 
     if (showCameraScanner) {
-        // Pantalla de la cámara a pantalla completa para escanear
         Box(modifier = Modifier.fillMaxSize()) {
             BarcodeScannerView(
                 onBarcodeDetected = { code ->
@@ -87,7 +87,6 @@ onBack: () -> Unit
                     showCameraScanner = false
                 }
             )
-            // Botón flotante para cerrar la cámara si se arrepiente
             Button(
                 onClick = { showCameraScanner = false },
                 modifier = Modifier
@@ -118,11 +117,12 @@ onBack: () -> Unit
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Campo ID del producto + Botones de Cámara y Galería
+                // Campo ID / Código de Barras
                 OutlinedTextField(
                     value = productId,
                     onValueChange = { productId = it },
-                    label = { Text("ID / Código de Barras") },
+                    label = { Text("ID / Código de Barras (Opcional)") },
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth(),
                     trailingIcon = {
                         Row {
@@ -141,58 +141,75 @@ onBack: () -> Unit
                     value = productName,
                     onValueChange = { productName = it },
                     label = { Text("Nombre del Producto") },
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Precio de Venta
-                OutlinedTextField(
-                    value = salePrice,
-                    onValueChange = { salePrice = it },
-                    label = { Text("Precio de Venta") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Precio de Venta
+                    OutlinedTextField(
+                        value = salePriceStr,
+                        onValueChange = { salePriceStr = it },
+                        label = { Text("Precio de Venta ($)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    )
 
-                // Costo
-                OutlinedTextField(
-                    value = cost,
-                    onValueChange = { cost = it },
-                    label = { Text("Costo") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    // Costo
+                    OutlinedTextField(
+                        value = costStr,
+                        onValueChange = { costStr = it },
+                        label = { Text("Costo ($)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
-                // Stock inicial
-                OutlinedTextField(
-                    value = stock,
-                    onValueChange = { stock = it },
-                    label = { Text("Stock Inicial") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Stock inicial
+                    OutlinedTextField(
+                        value = stockStr,
+                        onValueChange = { stockStr = it },
+                        label = { Text("Stock Inicial") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    )
 
-                // Proveedor
-                OutlinedTextField(
-                    value = supplier,
-                    onValueChange = { supplier = it },
-                    label = { Text("Proveedor") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    // Proveedor
+                    OutlinedTextField(
+                        value = supplier,
+                        onValueChange = { supplier = it },
+                        label = { Text("Proveedor") },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
                 // Selector de Categoría (ExposedDropdownMenu)
                 ExposedDropdownMenuBox(
                     expanded = expandedCategoryDropdown,
-                    onExpandedChange = { expandedCategoryDropdown = !expandedCategoryDropdown }
+                    onExpandedChange = { expandedCategoryDropdown = !expandedCategoryDropdown },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     OutlinedTextField(
-                        value = selectedCategory,
+                        value = selectedCategory ?: "Seleccionar Categoría",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Categoría") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoryDropdown) },
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
                             .fillMaxWidth()
-                            .menuAnchor()
                     )
                     ExposedDropdownMenu(
                         expanded = expandedCategoryDropdown,
@@ -200,9 +217,9 @@ onBack: () -> Unit
                     ) {
                         categories.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(category) },
+                                text = { Text(category.name) },
                                 onClick = {
-                                    selectedCategory = category
+                                    selectedCategory = category.name
                                     expandedCategoryDropdown = false
                                 }
                             )
@@ -210,20 +227,38 @@ onBack: () -> Unit
                     }
                 }
 
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage!!,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Botón Guardar
                 Button(
                     onClick = {
-                        onSaveProduct(
-                            productId,
-                            productName,
-                            salePrice,
-                            cost,
-                            stock,
-                            supplier,
-                            selectedCategory
-                        )
+                        val price = salePriceStr.toDoubleOrNull()
+                        val costPrice = costStr.toDoubleOrNull()
+                        val stock = stockStr.toIntOrNull()
+
+                        when {
+                            productName.isBlank() -> errorMessage = "Ingresa un nombre de producto válido"
+                            price == null || price <= 0.0 -> errorMessage = "Ingresa un precio de venta válido"
+                            stock == null || stock < 0 -> errorMessage = "Ingresa un stock inicial válido"
+                            else -> {
+                                onSave(
+                                    productName.trim(),
+                                    price,
+                                    costPrice,
+                                    supplier.ifBlank { null },
+                                    stock,
+                                    selectedCategory
+                                )
+                            }
+                        }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {

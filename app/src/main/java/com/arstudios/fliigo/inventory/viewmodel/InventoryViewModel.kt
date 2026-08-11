@@ -1,4 +1,4 @@
-// app/src/main/java/com/arstudios/fliigo/viewmodel/InventoryViewModel.kt
+// app/src/main/java/com/arstudios/fliigo/inventory/viewmodel/InventoryViewModel.kt
 package com.arstudios.fliigo.inventory.viewmodel
 
 import android.app.Application
@@ -164,6 +164,73 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Error de red: ${e.localizedMessage}") }
                 Log.e(TAG, "Excepción al registrar producto: ${e.localizedMessage}", e)
+            }
+        }
+    }
+
+    fun deleteProduct(productId: Int) {
+        viewModelScope.launch {
+            Log.d(TAG, "Eliminando producto con ID: $productId")
+            try {
+                val response = RetrofitClient.instance.deleteProduct(productId)
+                if (response.isSuccessful) {
+                    Log.d(TAG, "Producto eliminado con éxito.")
+                    loadInventoryData()
+                } else {
+                    _uiState.update { it.copy(errorMessage = "No se pudo eliminar el producto.") }
+                    Log.e(TAG, "Error HTTP al eliminar producto: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error de red: ${e.localizedMessage}") }
+                Log.e(TAG, "Excepción al eliminar producto: ${e.localizedMessage}", e)
+            }
+        }
+    }
+
+    fun updateProduct(
+        productId: Int,
+        name: String,
+        price: Double,
+        costPrice: Double?,
+        provider: String?,
+        stock: Int,
+        category: String?,
+        onComplete: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            Log.d(TAG, "Actualizando producto ID: $productId")
+            try {
+                val prefs = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
+                val storeId = prefs.getInt("STORE_ID", -1)
+
+                if (storeId == -1) {
+                    _uiState.update { it.copy(errorMessage = "Tienda no identificada.") }
+                    return@launch
+                }
+
+                val productDto = ProductDto(
+                    id = productId,
+                    storeId = storeId,
+                    name = name,
+                    price = price,
+                    costPrice = costPrice ?: 0.0,
+                    provider = provider ?: "",
+                    stock = stock,
+                    category = category
+                )
+
+                val response = RetrofitClient.instance.updateProduct(productId, productDto)
+                if (response.isSuccessful) {
+                    Log.d(TAG, "Producto actualizado con éxito.")
+                    loadInventoryData()
+                    onComplete()
+                } else {
+                    _uiState.update { it.copy(errorMessage = "No se pudo actualizar el producto.") }
+                    Log.e(TAG, "Error HTTP al actualizar producto: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error de red: ${e.localizedMessage}") }
+                Log.e(TAG, "Excepción al actualizar producto: ${e.localizedMessage}", e)
             }
         }
     }

@@ -12,8 +12,10 @@ import com.arstudios.fliigo.SetupStore.data.StoreSetupRequest
 import com.arstudios.fliigo.auth.data.UsuarioResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface ApiService {
@@ -59,13 +61,26 @@ interface ApiService {
         @Body product: ProductDto
     ): Response<Unit>
 
-    // CORregido: Coincide con POST /api/store/ de categoryController.js
+    // Eliminar un producto por su ID
+    @DELETE("api/products/{id}")
+    suspend fun deleteProduct(
+        @Path("id") productId: Int
+    ): Response<Unit>
+
+    // Actualizar un producto por su ID
+    @PUT("api/products/{id}")
+    suspend fun updateProduct(
+        @Path("id") productId: Int,
+        @Body product: ProductDto
+    ): Response<Unit>
+
+    // Coincide con POST /api/store/ de categoryController.js
     @POST("api/store")
     suspend fun createCategory(
         @Body request: Map<String, @JvmSuppressWildcards Any>
     ): Response<Unit>
 
-    // CORREGIDO: Coincide con GET /api/store/:storeId de categoryController.js[cite: 5]
+    // Coincide con GET /api/store/:storeId de categoryController.js
     @GET("api/store/{storeId}")
     suspend fun getCategoriesByStore(
         @Path("storeId") storeId: Int

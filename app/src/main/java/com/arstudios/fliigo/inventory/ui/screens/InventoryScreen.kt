@@ -1,3 +1,4 @@
+// app/src/main/java/com/arstudios/fliigo/inventory/ui/screens/InventoryScreen.kt
 package com.arstudios.fliigo.inventory.ui.screens
 
 import androidx.compose.animation.core.Animatable
@@ -197,6 +198,9 @@ fun InventoryScreen(
                                         IconButton(
                                             onClick = {
                                                 coroutineScope.launch { offsetX.animateTo(0f) }
+                                                product.id?.let { productId ->
+                                                    viewModel.deleteProduct(productId)
+                                                }
                                             },
                                             modifier = Modifier
                                                 .size(40.dp)
@@ -288,8 +292,20 @@ fun InventoryScreen(
                 product = productToEdit!!,
                 categories = categories,
                 onDismiss = { productToEdit = null },
-                onSave = { _, _, _, _, _, _ ->
-                    productToEdit = null
+                onSave = { name, price, costPrice, provider, stock, category ->
+                    productToEdit?.id?.let { id ->
+                        viewModel.updateProduct(
+                            productId = id,
+                            name = name,
+                            price = price,
+                            costPrice = costPrice,
+                            provider = provider,
+                            stock = stock,
+                            category = category
+                        ) {
+                            productToEdit = null
+                        }
+                    }
                 }
             )
         }
