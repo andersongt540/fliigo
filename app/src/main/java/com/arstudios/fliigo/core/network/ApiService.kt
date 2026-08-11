@@ -1,0 +1,73 @@
+package com.arstudios.fliigo.core.network
+
+import com.arstudios.fliigo.balance.data.BalanceResponse
+import com.arstudios.fliigo.inventory.data.CategoryDto
+import com.arstudios.fliigo.auth.data.LoginRequest
+import com.arstudios.fliigo.inventory.data.ProductDto
+import com.arstudios.fliigo.auth.data.RegistroInitRequest
+import com.arstudios.fliigo.auth.data.RegistroVerifyRequest
+import com.arstudios.fliigo.balance.data.SaleRequest
+import com.arstudios.fliigo.balance.data.SaleResponse
+import com.arstudios.fliigo.SetupStore.data.StoreSetupRequest
+import com.arstudios.fliigo.auth.data.UsuarioResponse
+import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Path
+
+interface ApiService {
+    @POST("api/auth/register")
+    suspend fun iniciarRegistro(
+        @Body request: RegistroInitRequest
+    ): Response<UsuarioResponse>
+
+    @POST("api/auth/verify-code")
+    suspend fun verificarCodigo(
+        @Body request: RegistroVerifyRequest
+    ): Response<UsuarioResponse>
+
+    @POST("api/auth/login")
+    suspend fun loginUser(
+        @Body request: LoginRequest
+    ): Response<UsuarioResponse>
+
+    @POST("api/store/setup")
+    suspend fun setupStore(
+        @Body request: StoreSetupRequest
+    ): Response<UsuarioResponse>
+
+    @GET("api/store/balance/{userId}")
+    suspend fun getStoreBalance(
+        @Path("userId") userId: Int
+    ): Response<BalanceResponse>
+
+    @POST("api/sales/register")
+    suspend fun registerSale(
+        @Body request: SaleRequest
+    ): Response<SaleResponse>
+
+    // Obtener los productos de la tienda por su ID
+    @GET("api/products/store/{storeId}")
+    suspend fun getProductsByStore(
+        @Path("storeId") storeId: Int
+    ): Response<List<ProductDto>>
+
+    // Registrar un nuevo producto en la tienda
+    @POST("api/products/register")
+    suspend fun registerProduct(
+        @Body product: ProductDto
+    ): Response<Unit>
+
+    // CORregido: Coincide con POST /api/store/ de categoryController.js
+    @POST("api/store")
+    suspend fun createCategory(
+        @Body request: Map<String, @JvmSuppressWildcards Any>
+    ): Response<Unit>
+
+    // CORREGIDO: Coincide con GET /api/store/:storeId de categoryController.js[cite: 5]
+    @GET("api/store/{storeId}")
+    suspend fun getCategoriesByStore(
+        @Path("storeId") storeId: Int
+    ): Response<List<CategoryDto>>
+}

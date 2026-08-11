@@ -1,6 +1,5 @@
 package com.arstudios.fliigo
 
-import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,11 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import com.arstudios.fliigo.data.network.RetrofitClient
-import com.arstudios.fliigo.ui.navigation.MainScreen
-import com.arstudios.fliigo.ui.screens.AuthScreen
-import com.arstudios.fliigo.ui.screens.SetupStoreScreen
-import com.arstudios.fliigo.ui.theme.FliigoTheme
+import com.arstudios.fliigo.core.network.RetrofitClient
+import com.arstudios.fliigo.core.navigation.MainScreen
+import com.arstudios.fliigo.auth.ui.screens.AuthScreen
+import com.arstudios.fliigo.SetupStore.ui.SetupStoreScreen
+import com.arstudios.fliigo.core.theme.FliigoTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,7 +26,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             FliigoTheme {
-                val sharedPreferences = getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
+                val sharedPreferences = getSharedPreferences("FliigoPrefs", MODE_PRIVATE)
 
                 // Verificación inicial robusta: Token presente y IDs válidos
                 val savedToken = sharedPreferences.getString("JWT_TOKEN", null)

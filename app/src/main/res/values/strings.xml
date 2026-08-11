@@ -50,6 +50,20 @@
     <string name="empty_sales_message">No hay ventas registradas hoy</string>
     <string name="btn_retry">Reintentar</string>
 
+    <!-- Diálogo Moderno de Registro de Venta -->
+    <string name="dialog_register_sale_title">Registrar Nueva Venta</string>
+    <string name="dialog_register_sale_subtitle">Completa los datos del cliente y producto</string>
+    <string name="dialog_product_select_hint">Selecciona un producto</string>
+    <string name="dialog_product_field_label">Producto</string>
+    <string name="dialog_client_name_label">Nombre del Cliente</string>
+    <string name="dialog_quantity_label">Cant.</string>
+    <string name="dialog_phone_label">Teléfono</string>
+    <string name="dialog_address_label">Dirección / Entrega</string>
+    <string name="error_empty_client">Ingresa el nombre del cliente</string>
+    <string name="error_select_product">Selecciona un producto</string>
+    <string name="error_invalid_quantity">La cantidad debe ser mayor a 0</string>
+    <string name="cd_register_sale_fab">Registrar Venta</string>
+
     <!-- Navegación Inferior (Bottom Bar) -->
     <string name="nav_balance">Balance</string>
     <string name="nav_debt">Deuda</string>
@@ -84,40 +98,40 @@
     <string name="cd_create_category">Crear Categoría</string>
     <string name="cd_register_product">Registrar Producto</string>
 
-        <!-- Inventario - Encabezado -->
-        <string name="inventory_categories_products_title">Categorías y Productos</string>
-        <string name="inventory_empty_state">No hay categorías ni productos registrados.</string>
-        <string name="inventory_empty_category">Sin productos en esta categoría</string>
-        <string name="inventory_stock_label">Stock: %d</string>
-        <string name="inventory_price_format">$ %.2f</string>
+    <!-- Inventario - Encabezado -->
+    <string name="inventory_categories_products_title">Categorías y Productos</string>
+    <string name="inventory_empty_state">No hay categorías ni productos registrados.</string>
+    <string name="inventory_empty_category">Sin productos en esta categoría</string>
+    <string name="inventory_stock_label">Stock: %d</string>
+    <string name="inventory_price_format">$ %.2f</string>
 
-        <!-- Descripciones de Botones Flotantes -->
-        <string name="fab_create_category_desc">Crear Categoría</string>
-        <string name="fab_register_product_desc">Registrar Producto</string>
+    <!-- Descripciones de Botones Flotantes -->
+    <string name="fab_create_category_desc">Crear Categoría</string>
+    <string name="fab_register_product_desc">Registrar Producto</string>
 
-        <!-- Diálogo: Crear Categoría -->
-        <string name="dialog_category_title">Nueva Categoría</string>
-        <string name="dialog_category_label">Nombre de la categoría</string>
-        <string name="dialog_btn_save">Guardar</string>
-        <string name="dialog_btn_cancel">Cancelar</string>
+    <!-- Diálogo: Crear Categoría -->
+    <string name="dialog_category_title">Nueva Categoría</string>
+    <string name="dialog_category_label">Nombre de la categoría</string>
+    <string name="dialog_btn_save">Guardar</string>
+    <string name="dialog_btn_cancel">Cancelar</string>
 
-        <!-- Diálogo: Registrar Producto -->
-        <string name="dialog_product_title">Registrar Producto</string>
-        <string name="dialog_product_name_label">Nombre del Producto</string>
-        <string name="dialog_product_category_label">Categoría</string>
-        <string name="dialog_product_price_label">Precio de Venta ($)</string>
-        <string name="dialog_product_cost_label">Precio de Costo ($)</string>
-        <string name="dialog_product_provider_label">Proveedor (Opcional)</string>
-        <string name="dialog_product_stock_label">Cantidad / Stock</string>
-        <string name="dialog_btn_register">Registrar</string>
+    <!-- Diálogo: Registrar Producto -->
+    <string name="dialog_product_title">Registrar Producto</string>
+    <string name="dialog_product_name_label">Nombre del Producto</string>
+    <string name="dialog_product_category_label">Categoría</string>
+    <string name="dialog_product_price_label">Precio de Venta ($)</string>
+    <string name="dialog_product_cost_label">Precio de Costo ($)</string>
+    <string name="dialog_product_provider_label">Proveedor (Opcional)</string>
+    <string name="dialog_product_stock_label">Cantidad / Stock</string>
+    <string name="dialog_btn_register">Registrar</string>
 
-        <!-- Diálogo: Detalle del Producto -->
-        <string name="product_detail_id">ID del Producto: %s</string>
-        <string name="product_detail_category">Categoría: %s</string>
-        <string name="product_detail_sale_price">Precio de Venta: $ %.2f</string>
-        <string name="product_detail_cost_price">Precio de Costo: $ %.2f</string>
-        <string name="product_detail_provider">Proveedor: %s</string>
-        <string name="product_detail_stock">Cantidad en Stock: %d</string>
-        <string name="product_detail_provider_fallback">No especificado</string>
-        <string name="dialog_btn_close">Cerrar</string>
+    <!-- Diálogo: Detalle del Producto -->
+    <string name="product_detail_id">ID del Producto: %s</string>
+    <string name="product_detail_category">Categoría: %s</string>
+    <string name="product_detail_sale_price">Precio de Venta: $ %.2f</string>
+    <string name="product_detail_cost_price">Precio de Costo: $ %.2f</string>
+    <string name="product_detail_provider">Proveedor: %s</string>
+    <string name="product_detail_stock">Cantidad en Stock: %d</string>
+    <string name="product_detail_provider_fallback">No especificado</string>
+    <string name="dialog_btn_close">Cerrar</string>
 </resources>
