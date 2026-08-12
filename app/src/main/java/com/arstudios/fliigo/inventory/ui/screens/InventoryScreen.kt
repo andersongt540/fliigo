@@ -1,4 +1,3 @@
-// app/src/main/java/com/arstudios/fliigo/inventory/ui/screens/InventoryScreen.kt
 package com.arstudios.fliigo.inventory.ui.screens
 
 import androidx.compose.animation.core.Animatable
@@ -348,35 +347,54 @@ fun InventoryScreen(
             }
         }
 
-        // --- DIÁLOGO: CREAR CATEGORÍA ---
+        // --- DIÁLOGO: CREAR CATEGORÍA (MÁS BONITO) ---
         if (showCategoryDialog) {
             AlertDialog(
                 onDismissRequest = { showCategoryDialog = false },
-                title = { Text(stringResource(R.string.dialog_create_category_title)) },
+                title = { 
+                    Text(
+                        stringResource(R.string.dialog_create_category_title),
+                        fontWeight = FontWeight.Bold,
+                        color = textoOscuro
+                    ) 
+                },
                 text = {
                     OutlinedTextField(
                         value = categoryInput,
                         onValueChange = { categoryInput = it },
                         label = { Text(stringResource(R.string.dialog_category_hint)) },
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textoOscuro,
+                            unfocusedTextColor = textoOscuro,
+                            focusedBorderColor = botonesOscuros
+                        )
                     )
                 },
                 confirmButton = {
-                    TextButton(onClick = {
-                        if (categoryInput.isNotBlank()) {
-                            viewModel.createCategory(categoryInput.trim()) {
-                                showCategoryDialog = false
+                    Button(
+                        onClick = {
+                            if (categoryInput.isNotBlank()) {
+                                viewModel.createCategory(categoryInput.trim()) {
+                                    showCategoryDialog = false
+                                }
                             }
-                        }
-                    }) {
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = botonesOscuros),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
                         Text(stringResource(R.string.btn_save))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showCategoryDialog = false }) {
-                        Text(stringResource(R.string.btn_cancel))
+                        Text(stringResource(R.string.btn_cancel), color = Color.Gray)
                     }
-                }
+                },
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White
             )
         }
 
@@ -385,14 +403,15 @@ fun InventoryScreen(
             RegisterProductScreen(
                 categories = categories,
                 onBack = { showProductScreen = false },
-                onSave = { name, price, costPrice, provider, stock, category ->
+                onSave = { name, price, costPrice, provider, stock, category, barcode ->
                     viewModel.registerProduct(
                         name = name,
                         price = price,
                         costPrice = costPrice,
                         provider = provider,
                         stock = stock,
-                        category = category
+                        category = category,
+                        barcode = barcode
                     ) {
                         showProductScreen = false
                     }

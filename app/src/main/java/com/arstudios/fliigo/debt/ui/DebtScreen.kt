@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arstudios.fliigo.R
+import com.arstudios.fliigo.debt.ui.components.AddDebtDialog
 import com.arstudios.fliigo.debt.viewmodel.DebtUiState
 import com.arstudios.fliigo.debt.viewmodel.DebtViewModel
 import java.util.Locale
@@ -38,13 +39,14 @@ fun DebtScreen(
     val rojoGasto = colorResource(R.color.rojo_gasto)
     val grisFondo = colorResource(R.color.gris_fondo)
 
-    // Contenedor principal que recibe el padding del Scaffold central
+    var showAddDebtDialog by remember { mutableStateOf<String?>(null) } // "receivable" o "payable"
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(fondoVerde)
     ) {
-        // --- ENCABEZADO SUPERIOR ---
+        // --- ENCABEZADO ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -80,15 +82,12 @@ fun DebtScreen(
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("❓", fontSize = 20.sp)
-                Text("🔔", fontSize = 20.sp)
-            }
+            Spacer(modifier = Modifier.size(40.dp))
         }
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // --- CONTENEDOR PRINCIPAL INFERIOR ---
+        // --- CONTENIDO ---
         Card(
             modifier = Modifier
                 .fillMaxSize()
@@ -120,7 +119,6 @@ fun DebtScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Tarjetas superiores: Por Cobrar / Por Pagar
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -132,26 +130,15 @@ fun DebtScreen(
                                 colors = CardDefaults.cardColors(containerColor = Color.White)
                             ) {
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text("🟢 ", fontSize = 12.sp)
-                                        Text(stringResource(R.string.label_receivable), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = textoOscuro)
-                                    }
+                                    Text("🟢 " + stringResource(R.string.label_receivable), fontSize = 12.sp, color = Color.Gray)
                                     Text(
                                         text = "$ ${String.format(Locale.US, "%.1f", state.totalReceivable)}",
-                                        fontSize = 20.sp,
+                                        fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = textoOscuro
-                                    )
-                                    Text(
-                                        text = "${state.receivableClientsCount} ${stringResource(R.string.label_clients)}",
-                                        fontSize = 11.sp,
-                                        color = Color.Gray
                                     )
                                 }
                             }
@@ -163,144 +150,99 @@ fun DebtScreen(
                                 colors = CardDefaults.cardColors(containerColor = Color.White)
                             ) {
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text("🔴 ", fontSize = 12.sp)
-                                        Text(stringResource(R.string.label_payable), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = textoOscuro)
-                                    }
+                                    Text("🔴 " + stringResource(R.string.label_payable), fontSize = 12.sp, color = Color.Gray)
                                     Text(
                                         text = "$ ${String.format(Locale.US, "%.1f", state.totalPayable)}",
-                                        fontSize = 20.sp,
+                                        fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = textoOscuro
-                                    )
-                                    Text(
-                                        text = "${state.payableClientsCount} ${stringResource(R.string.label_clients)}",
-                                        fontSize = 11.sp,
-                                        color = Color.Gray
                                     )
                                 }
                             }
                         }
 
-                        // Barra de Búsqueda de Registros
-                        Row(
+                        // Barra de búsqueda
+                        OutlinedTextField(
+                            value = state.searchQuery,
+                            onValueChange = { viewModel.updateSearchQuery(it) },
+                            placeholder = { Text(stringResource(R.string.search_hint)) },
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = state.searchQuery,
-                                onValueChange = { viewModel.updateSearchQuery(it) },
-                                placeholder = { Text(stringResource(R.string.search_hint), fontSize = 13.sp) },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp),
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    unfocusedContainerColor = Color.White,
-                                    focusedContainerColor = Color.White
-                                )
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textoOscuro,
+                                unfocusedTextColor = textoOscuro,
+                                unfocusedContainerColor = Color.White,
+                                focusedContainerColor = Color.White
                             )
-                            IconButton(
-                                onClick = {},
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .background(Color.White, shape = RoundedCornerShape(16.dp))
-                            ) {
-                                Text("📥", fontSize = 18.sp)
-                            }
-                        }
+                        )
 
-                        // Lista de Registros de Deuda
+                        // Lista
                         LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
+                            modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(state.debtList) { debt ->
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(16.dp),
+                                    shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(containerColor = Color.White)
                                 ) {
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(12.dp),
+                                        modifier = Modifier.padding(12.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(36.dp)
-                                                    .background(verdeExito, shape = CircleShape),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text("C", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                            }
-                                            Column {
-                                                Text(text = debt.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textoOscuro)
-                                                Text(text = debt.timeAgo, fontSize = 11.sp, color = Color.Gray)
-                                            }
+                                        Column {
+                                            Text(text = debt.title, fontWeight = FontWeight.Bold, color = textoOscuro)
+                                            Text(text = debt.timeAgo, fontSize = 11.sp, color = Color.Gray)
                                         }
-
-                                        Column(horizontalAlignment = Alignment.End) {
-                                            Text(
-                                                text = "$ ${String.format(Locale.US, "%.1f", debt.amount)}",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp,
-                                                color = verdeExito
-                                            )
-                                            Text(
-                                                text = debt.paymentMethod,
-                                                fontSize = 11.sp,
-                                                color = Color.Gray
-                                            )
-                                        }
+                                        Text(
+                                            text = "$ ${String.format(Locale.US, "%.1f", debt.amount)}",
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (debt.amount > 0) verdeExito else rojoGasto
+                                        )
                                     }
                                 }
                             }
                         }
 
-                        // Botones de Acción inferior (VENTA y GASTO)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
+                        // Botones inferiores
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Button(
-                                onClick = {},
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(50.dp),
-                                shape = RoundedCornerShape(24.dp),
+                                onClick = { showAddDebtDialog = "receivable" },
+                                modifier = Modifier.weight(1f).height(50.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = verdeExito)
                             ) {
-                                Text(stringResource(R.string.btn_sale), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                Text("COBRAR", fontWeight = FontWeight.Bold)
                             }
                             Button(
-                                onClick = {},
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(50.dp),
-                                shape = RoundedCornerShape(24.dp),
+                                onClick = { showAddDebtDialog = "payable" },
+                                modifier = Modifier.weight(1f).height(50.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = rojoGasto)
                             ) {
-                                Text(stringResource(R.string.btn_expense), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                Text("PAGAR", fontWeight = FontWeight.Bold)
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    if (showAddDebtDialog != null) {
+        AddDebtDialog(
+            type = showAddDebtDialog!!,
+            onDismiss = { showAddDebtDialog = null },
+            onConfirm = { client, amount, desc ->
+                // Aquí llamarías al viewModel para guardar la deuda
+                showAddDebtDialog = null
+            }
+        )
     }
 }

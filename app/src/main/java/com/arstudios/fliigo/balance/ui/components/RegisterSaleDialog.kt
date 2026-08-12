@@ -94,7 +94,11 @@ fun RegisterSaleDialog(
                         label = { Text(stringResource(R.string.client_name_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textoOscuro,
+                            unfocusedTextColor = textoOscuro
+                        )
                     )
 
                     Row(
@@ -107,7 +111,11 @@ fun RegisterSaleDialog(
                             label = { Text(stringResource(R.string.address_label)) },
                             modifier = Modifier.weight(1.5f),
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textoOscuro,
+                                unfocusedTextColor = textoOscuro
+                            )
                         )
                         OutlinedTextField(
                             value = telefono,
@@ -116,7 +124,11 @@ fun RegisterSaleDialog(
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textoOscuro,
+                                unfocusedTextColor = textoOscuro
+                            )
                         )
                     }
 

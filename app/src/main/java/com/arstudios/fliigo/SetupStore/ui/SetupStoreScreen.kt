@@ -108,7 +108,11 @@ fun SetupStoreScreen(
                             label = { Text(stringResource(R.string.store_name_label)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextoOscuro,
+                                unfocusedTextColor = TextoOscuro
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -120,7 +124,11 @@ fun SetupStoreScreen(
                             label = { Text(stringResource(R.string.store_category_label)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextoOscuro,
+                                unfocusedTextColor = TextoOscuro
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -132,7 +140,11 @@ fun SetupStoreScreen(
                             label = { Text(stringResource(R.string.store_address_label)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextoOscuro,
+                                unfocusedTextColor = TextoOscuro
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -144,7 +156,11 @@ fun SetupStoreScreen(
                             label = { Text(stringResource(R.string.store_phone_label)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextoOscuro,
+                                unfocusedTextColor = TextoOscuro
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(24.dp))

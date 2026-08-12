@@ -56,7 +56,11 @@ fun AuthFormCard(
                 label = { Text(stringResource(R.string.email_or_user_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = TextoOscuro,
+                    unfocusedTextColor = TextoOscuro
+                )
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -70,6 +74,10 @@ fun AuthFormCard(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = TextoOscuro,
+                    unfocusedTextColor = TextoOscuro
+                ),
                 trailingIcon = {
                     IconButton(onClick = { viewModel.passwordVisible = !viewModel.passwordVisible }) {
                         Text(text = if (viewModel.passwordVisible) "👁️" else "🙈", fontSize = 14.sp)

@@ -1,4 +1,3 @@
-// app/src/main/java/com/arstudios/fliigo/inventory/viewmodel/InventoryViewModel.kt
 package com.arstudios.fliigo.inventory.viewmodel
 
 import android.app.Application
@@ -37,88 +36,41 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
     fun loadInventoryData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            Log.d(TAG, "Cargando datos de inventario...")
             try {
                 val prefs = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
                 val storeId = prefs.getInt("STORE_ID", -1)
 
-                if (storeId == -1) {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = "Tienda no identificada. Por favor, inicia sesión nuevamente."
-                        )
-                    }
-                    Log.e(TAG, "Error: StoreId no encontrado en SharedPreferences (-1).")
-                    return@launch
-                }
+                if (storeId == -1) return@launch
 
                 val productsResponse = RetrofitClient.instance.getProductsByStore(storeId)
                 val categoriesResponse = RetrofitClient.instance.getCategoriesByStore(storeId)
 
                 if (productsResponse.isSuccessful && categoriesResponse.isSuccessful) {
-                    val products = productsResponse.body() ?: emptyList()
-                    val categories = categoriesResponse.body() ?: emptyList()
-
                     _uiState.update {
                         it.copy(
-                            products = products,
-                            categories = categories,
+                            products = productsResponse.body() ?: emptyList(),
+                            categories = categoriesResponse.body() ?: emptyList(),
                             isLoading = false
                         )
                     }
-                    Log.d(TAG, "Inventario cargado exitosamente. Productos: ${products.size}, Categorías: ${categories.size}")
-                } else {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = "Error al cargar los datos del inventario desde el servidor."
-                        )
-                    }
-                    Log.e(TAG, "Error HTTP inventario - Productos: ${productsResponse.code()}, Categorías: ${categoriesResponse.code()}")
                 }
             } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = "Error de red: ${e.localizedMessage}"
-                    )
-                }
-                Log.e(TAG, "Excepción al cargar inventario: ${e.localizedMessage}", e)
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage) }
             }
         }
     }
 
     fun createCategory(categoryName: String, onComplete: () -> Unit = {}) {
         viewModelScope.launch {
-            Log.d(TAG, "Creando categoría: $categoryName")
             try {
-                val prefs = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
-                val storeId = prefs.getInt("STORE_ID", -1)
-
-                if (storeId == -1) {
-                    Log.e(TAG, "Error al crear categoría: StoreId no válido.")
-                    return@launch
-                }
-
-                val requestMap = mapOf(
-                    "storeId" to storeId as Any,
-                    "name" to categoryName as Any
-                )
-
+                val storeId = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE).getInt("STORE_ID", -1)
+                val requestMap = mapOf("storeId" to storeId, "name" to categoryName)
                 val response = RetrofitClient.instance.createCategory(requestMap)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Categoría creada con éxito.")
                     loadInventoryData()
                     onComplete()
-                } else {
-                    _uiState.update { it.copy(errorMessage = "No se pudo registrar la categoría.") }
-                    Log.e(TAG, "Error HTTP al crear categoría: ${response.code()}")
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Error de red: ${e.localizedMessage}") }
-                Log.e(TAG, "Excepción al crear categoría: ${e.localizedMessage}", e)
-            }
+            } catch (e: Exception) { /* Log error */ }
         }
     }
 
@@ -129,19 +81,12 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         provider: String?,
         stock: Int,
         category: String?,
+        barcode: String? = null,
         onComplete: () -> Unit = {}
     ) {
         viewModelScope.launch {
-            Log.d(TAG, "Registrando producto: $name")
             try {
-                val prefs = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
-                val storeId = prefs.getInt("STORE_ID", -1)
-
-                if (storeId == -1) {
-                    _uiState.update { it.copy(errorMessage = "Tienda no identificada.") }
-                    return@launch
-                }
-
+                val storeId = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE).getInt("STORE_ID", -1)
                 val productDto = ProductDto(
                     storeId = storeId,
                     name = name,
@@ -149,41 +94,24 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
                     costPrice = costPrice ?: 0.0,
                     provider = provider ?: "",
                     stock = stock,
-                    category = category
+                    category = category,
+                    barcode = barcode
                 )
-
                 val response = RetrofitClient.instance.registerProduct(productDto)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Producto registrado con éxito.")
                     loadInventoryData()
                     onComplete()
-                } else {
-                    _uiState.update { it.copy(errorMessage = "No se pudo registrar el producto.") }
-                    Log.e(TAG, "Error HTTP al registrar producto: ${response.code()}")
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Error de red: ${e.localizedMessage}") }
-                Log.e(TAG, "Excepción al registrar producto: ${e.localizedMessage}", e)
-            }
+            } catch (e: Exception) { /* Log error */ }
         }
     }
 
     fun deleteProduct(productId: Int) {
         viewModelScope.launch {
-            Log.d(TAG, "Eliminando producto con ID: $productId")
             try {
                 val response = RetrofitClient.instance.deleteProduct(productId)
-                if (response.isSuccessful) {
-                    Log.d(TAG, "Producto eliminado con éxito.")
-                    loadInventoryData()
-                } else {
-                    _uiState.update { it.copy(errorMessage = "No se pudo eliminar el producto.") }
-                    Log.e(TAG, "Error HTTP al eliminar producto: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Error de red: ${e.localizedMessage}") }
-                Log.e(TAG, "Excepción al eliminar producto: ${e.localizedMessage}", e)
-            }
+                if (response.isSuccessful) loadInventoryData()
+            } catch (e: Exception) { /* Log error */ }
         }
     }
 
@@ -198,16 +126,8 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         onComplete: () -> Unit = {}
     ) {
         viewModelScope.launch {
-            Log.d(TAG, "Actualizando producto ID: $productId")
             try {
-                val prefs = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
-                val storeId = prefs.getInt("STORE_ID", -1)
-
-                if (storeId == -1) {
-                    _uiState.update { it.copy(errorMessage = "Tienda no identificada.") }
-                    return@launch
-                }
-
+                val storeId = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE).getInt("STORE_ID", -1)
                 val productDto = ProductDto(
                     id = productId,
                     storeId = storeId,
@@ -218,20 +138,12 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
                     stock = stock,
                     category = category
                 )
-
                 val response = RetrofitClient.instance.updateProduct(productId, productDto)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Producto actualizado con éxito.")
                     loadInventoryData()
                     onComplete()
-                } else {
-                    _uiState.update { it.copy(errorMessage = "No se pudo actualizar el producto.") }
-                    Log.e(TAG, "Error HTTP al actualizar producto: ${response.code()}")
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Error de red: ${e.localizedMessage}") }
-                Log.e(TAG, "Excepción al actualizar producto: ${e.localizedMessage}", e)
-            }
+            } catch (e: Exception) { /* Log error */ }
         }
     }
 }

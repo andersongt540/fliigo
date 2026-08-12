@@ -37,7 +37,20 @@
     <string name="store_category_label">Rubro (Ej. Minimarket, Repuestos)</string>
     <string name="store_address_label">Dirección</string>
     <string name="store_phone_label">Teléfono del local</string>
-    <string name="btn_save_store">Crear Tienda y Acceder</string>
+    <string name="btn_save_store">Crear Tienda y Continuar</string>
+
+    <!-- Module Selection -->
+    <string name="module_selection_title">Selecciona tus Módulos</string>
+    <string name="module_selection_subtitle">Activa las herramientas que necesitas</string>
+    <string name="module_balance_name">Balance Diario</string>
+    <string name="module_balance_desc">Control de ingresos y gastos</string>
+    <string name="module_debt_name">Gestión de Deudas</string>
+    <string name="module_debt_desc">Cuentas por cobrar y pagar</string>
+    <string name="module_stats_name">Estadísticas</string>
+    <string name="module_stats_desc">Reportes y análisis de ventas</string>
+    <string name="module_inventory_name">Inventario</string>
+    <string name="module_inventory_desc">Control de stock y productos</string>
+    <string name="btn_finish_setup">Finalizar Configuración</string>
 
     <!-- Balance Screen -->
     <string name="profile_desc">Perfil</string>
@@ -129,8 +142,9 @@
     <!-- Register/Edit Product -->
     <string name="register_product_title">Registrar Producto</string>
     <string name="edit_product_title">Editar Producto</string>
-    <string name="product_name_label">Nombre</string>
-    <string name="price_label">Precio ($)</string>
+    <string name="product_name_label">Nombre del Producto</string>
+    <string name="label_product_id">Código / ID de Producto</string>
+    <string name="price_label">Precio de Venta ($)</string>
     <string name="cost_price_label">Costo ($)</string>
     <string name="plain_stock_label">Stock</string>
     <string name="provider_label">Proveedor</string>

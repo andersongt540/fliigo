@@ -12,22 +12,23 @@ import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.arstudios.fliigo.SetupStore.ui.SetupStoreScreen
+import com.arstudios.fliigo.SetupStore.ui.screens.ModuleSelectionScreen
 import com.arstudios.fliigo.auth.ui.screens.AuthScreen
 import com.arstudios.fliigo.core.navigation.MainScreen
 import com.arstudios.fliigo.core.network.RetrofitClient
 import com.arstudios.fliigo.core.theme.FliigoTheme
 
+enum class AppScreen {
+    Auth, SetupStore, ModuleSelection, Main
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inicializar el contexto de Retrofit inmediatamente
         RetrofitClient.context = applicationContext
-
-        // 1. Permitir que el contenido dibuje detrás de las barras del sistema
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        // 2. Ocultar la barra de estado y la barra de navegación (Modo Inmersivo)
         hideSystemUI()
 
         setContent {
@@ -36,24 +37,56 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    var isLoggedIn by remember {
+                    val prefs = getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
+                    
+                    var currentScreen by remember {
                         mutableStateOf(
-                            getSharedPreferences("FliigoPrefs", MODE_PRIVATE)
-                                .getString("JWT_TOKEN", null) != null
+                            if (prefs.getString("JWT_TOKEN", null) != null) {
+                                if (prefs.getInt("STORE_ID", -1) != -1) {
+                                    // Si ya tiene tienda, verificamos si ya configuró módulos
+                                    if (prefs.contains("module_balance")) AppScreen.Main
+                                    else AppScreen.ModuleSelection
+                                } else {
+                                    AppScreen.SetupStore
+                                }
+                            } else {
+                                AppScreen.Auth
+                            }
                         )
                     }
 
-                    if (isLoggedIn) {
-                        MainScreen(onLogout = { isLoggedIn = false })
-                    } else {
-                        AuthScreen(onLoginSuccess = { isLoggedIn = true })
+                    when (currentScreen) {
+                        AppScreen.Auth -> {
+                            AuthScreen(onLoginSuccess = { hasStore ->
+                                currentScreen = if (hasStore) {
+                                    if (prefs.contains("module_balance")) AppScreen.Main
+                                    else AppScreen.ModuleSelection
+                                } else {
+                                    AppScreen.SetupStore
+                                }
+                            })
+                        }
+                        AppScreen.SetupStore -> {
+                            SetupStoreScreen(onStoreCreated = {
+                                currentScreen = AppScreen.ModuleSelection
+                            })
+                        }
+                        AppScreen.ModuleSelection -> {
+                            ModuleSelectionScreen(onFinish = {
+                                currentScreen = AppScreen.Main
+                            })
+                        }
+                        AppScreen.Main -> {
+                            MainScreen(onLogout = { 
+                                currentScreen = AppScreen.Auth 
+                            })
+                        }
                     }
                 }
             }
         }
     }
 
-    // Opcional: Asegurar que la pantalla completa se mantenga al volver a enfocar la app
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
