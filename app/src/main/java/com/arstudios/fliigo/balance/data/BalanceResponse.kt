@@ -8,11 +8,16 @@ data class BalanceResponse(
     val totalIncome: Double?,
     val totalExpenses: Double?,
     val error: String? = null,
-    val sales: List<SaleItemDto>? = null // <--- Lista de ventas de la base de datos
+    val sales: List<SaleItemDto>? = null
 )
 
 data class SaleItemDto(
+    val id: Int?,
     val productName: String?,
     val clientName: String?,
-    val amount: Double?
+    val amount: Double?,
+    val date: String?,
+    val address: String?,
+    val phone: String?,
+    val quantity: Int?
 )

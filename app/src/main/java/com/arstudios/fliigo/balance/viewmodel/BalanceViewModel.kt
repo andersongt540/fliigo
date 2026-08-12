@@ -1,4 +1,3 @@
-// app/src/main/java/com/arstudios/fliigo/viewmodel/BalanceViewModel.kt
 package com.arstudios.fliigo.balance.viewmodel
 
 import android.app.Application
@@ -9,12 +8,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.arstudios.fliigo.R
 import com.arstudios.fliigo.inventory.data.ProductDto
 import com.arstudios.fliigo.balance.data.SaleItem
 import com.arstudios.fliigo.balance.data.SaleRequest
 import com.arstudios.fliigo.core.network.RetrofitClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 sealed interface BalanceUiState {
     object Loading : BalanceUiState
@@ -46,9 +48,41 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
     var productErrorMessage by mutableStateOf<String?>(null)
         private set
 
+    // Control de índice activo para el escáner de códigos de barras en los diálogos de venta
+    var activeRowIndex by mutableStateOf<Int?>(null)
+        private set
+
+    // Estado para controlar la visibilidad del modal del escáner en la pantalla
+    var showScannerModal by mutableStateOf(false)
+        private set
+
+    // Estado reactivo para propagar el código escaneado junto con su índice de fila
+    var lastScannedBarcode by mutableStateOf<Pair<Int, String>?>(null)
+        private set
+
     init {
         Log.d(TAG, "Inicializando BalanceViewModel. Llamando a loadStoreBalance()...")
         loadStoreBalance()
+        loadStoreProducts()
+    }
+
+    fun updateActiveRowIndex(index: Int?) {
+        activeRowIndex = index
+    }
+
+    fun setScannerModalVisibility(isVisible: Boolean) {
+        showScannerModal = isVisible
+        if (!isVisible) {
+            activeRowIndex = null
+        }
+    }
+
+    fun deliverScannedCode(index: Int, code: String) {
+        lastScannedBarcode = Pair(index, code)
+    }
+
+    fun clearScannedBarcode() {
+        lastScannedBarcode = null
     }
 
     fun loadStoreBalance() {
@@ -60,32 +94,38 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
                 Log.d(TAG, "USER_ID recuperado de SharedPreferences: $userId")
 
                 if (userId == -1) {
-                    uiState = BalanceUiState.Error("Usuario no identificado.")
+                    uiState = BalanceUiState.Error(getApplication<Application>().getString(R.string.error_user_not_identified))
                     Log.e(TAG, "Error: UserId no encontrado en SharedPreferences.")
                     return@launch
                 }
 
-                Log.d(TAG, "Realizando llamada Retrofit getStoreBalance con userId: $userId")
                 val response = RetrofitClient.instance.getStoreBalance(userId)
-                Log.d(TAG, "Respuesta recibida de getStoreBalance. Código HTTP: ${response.code()}")
 
                 if (response.code() == 401 || response.code() == 403) {
-                    Log.w(TAG, "Sesión no autorizada o prohibida (${response.code()}). Cerrando sesión local...")
                     cerrarSesionLocal()
-                    uiState = BalanceUiState.Error("La sesión ha expirado o el usuario ya no existe.")
+                    uiState = BalanceUiState.Error(getApplication<Application>().getString(R.string.error_session_expired))
                     return@launch
                 }
 
                 if (response.isSuccessful && response.body() != null) {
                     val data = response.body()!!
-                    Log.d(TAG, "Cuerpo de la respuesta getStoreBalance exitoso. Mapeando ventas...")
+                    
+                    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val today = sdf.format(Date())
+                    Log.d(TAG, "Filtrando ventas para el día: $today")
+
                     val mappedSales = data.sales?.map { dto ->
                         SaleItem(
+                            id = dto.id ?: 0,
                             productName = dto.productName ?: "Sin producto",
                             clientName = dto.clientName ?: "Cliente general",
-                            amount = dto.amount ?: 0.0
+                            amount = dto.amount ?: 0.0,
+                            date = dto.date ?: "",
+                            address = dto.address ?: "",
+                            phone = dto.phone ?: "",
+                            quantity = dto.quantity ?: 1
                         )
-                    } ?: emptyList()
+                    }?.filter { it.date.startsWith(today) } ?: emptyList()
 
                     uiState = BalanceUiState.Success(
                         storeName = data.storeName ?: "Tienda AR",
@@ -95,19 +135,67 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
                         totalExpenses = data.totalExpenses ?: 0.0,
                         salesList = mappedSales
                     )
-                    Log.d(TAG, "Balance cargado exitosamente para la tienda: ${data.storeName}. Total de ventas mapeadas: ${mappedSales.size}")
                 } else {
-                    uiState = BalanceUiState.Error("No se pudo cargar el balance desde el servidor.")
-                    val errorBodyStr = response.errorBody()?.string() ?: "Sin detalles"
-                    Log.e(TAG, "Error HTTP al cargar balance. Código: ${response.code()}, ErrorBody: $errorBodyStr")
+                    uiState = BalanceUiState.Error(getApplication<Application>().getString(R.string.error_balance_load_failed))
                 }
             } catch (e: Exception) {
-                uiState = BalanceUiState.Error("Error de red: ${e.localizedMessage}")
-                Log.e(TAG, "Excepción crítica al cargar balance: ${e.localizedMessage}", e)
+                uiState = BalanceUiState.Error(getApplication<Application>().getString(R.string.error_network_generic, e.localizedMessage))
             } finally {
                 Log.d(TAG, "=== FIN loadStoreBalance ===")
             }
         }
+    }
+
+    fun registerSaleWithValidation(
+        clientName: String,
+        address: String,
+        phone: String,
+        productRows: List<com.arstudios.fliigo.balance.ui.components.SaleItemRow>,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val app = getApplication<Application>()
+        if (clientName.isBlank()) {
+            onError(app.getString(R.string.error_empty_client))
+            return
+        }
+
+        if (productRows.isEmpty() || productRows.any { it.productId.isBlank() }) {
+            onError(app.getString(R.string.error_no_products))
+            return
+        }
+
+        for (row in productRows) {
+            val pIdInt = row.productId.toIntOrNull()
+            val requestedQty = row.quantity.toIntOrNull() ?: 0
+
+            if (pIdInt == null || requestedQty <= 0) {
+                onError(app.getString(R.string.error_invalid_prod_qty))
+                return
+            }
+
+            val matchedProduct = productList.find { it.id == pIdInt }
+            if (matchedProduct == null) {
+                onError(app.getString(R.string.error_product_not_found))
+                return
+            }
+
+            if (matchedProduct.stock < requestedQty) {
+                onError(app.getString(R.string.error_insufficient_stock, matchedProduct.name, matchedProduct.stock))
+                return
+            }
+        }
+
+        val firstRow = productRows.first()
+        registerSale(
+            clientName = clientName,
+            address = address,
+            phone = phone,
+            productId = firstRow.productId.toInt(),
+            quantity = firstRow.quantity.toInt(),
+            onSuccess = onSuccess,
+            onError = onError
+        )
     }
 
     fun registerSale(
@@ -120,16 +208,12 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
-            Log.d(TAG, "=== INICIO registerSale ===")
-            Log.d(TAG, "Parámetros de venta -> Producto ID: $productId, Cantidad: $quantity, Cliente: $clientName, Tel: $phone, Dir: $address")
             try {
                 val sharedPreferences = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
                 val storeId = sharedPreferences.getInt("STORE_ID", -1)
-                Log.d(TAG, "STORE_ID recuperado de SharedPreferences: $storeId")
 
                 if (storeId == -1) {
-                    onError("Error: Tienda no identificada.")
-                    Log.e(TAG, "Error al registrar venta: StoreId no encontrado en SharedPreferences.")
+                    onError(getApplication<Application>().getString(R.string.error_store_not_identified))
                     return@launch
                 }
 
@@ -142,105 +226,86 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
                     quantity = quantity
                 )
 
-                Log.d(TAG, "Enviando solicitud registerSale al servidor...")
                 val response = RetrofitClient.instance.registerSale(request)
-                Log.d(TAG, "Respuesta de registerSale recibida. Código HTTP: ${response.code()}")
 
                 if (response.code() == 401 || response.code() == 403) {
-                    Log.w(TAG, "Sesión expirada durante el registro de venta (${response.code()}). Cerrando sesión local...")
                     cerrarSesionLocal()
-                    onError("Sesión expirada. Por favor, inicia sesión nuevamente.")
+                    onError(getApplication<Application>().getString(R.string.error_session_expired))
                     return@launch
                 }
 
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Venta registrada exitosamente en el servidor.")
-
-                    // Ejecutamos callback para cerrar UI/diálogos
                     onSuccess()
-
-                    // Pausa de seguridad para asegurar consistencia en base de datos remota
-                    Log.d(TAG, "Esperando 500ms antes de recargar el balance...")
                     delay(500)
-
-                    Log.d(TAG, "Actualizando balance de la tienda tras registrar la venta...")
                     loadStoreBalance()
+                    loadStoreProducts()
                 } else {
-                    val errorBodyStr = response.errorBody()?.string() ?: "Sin detalles"
-                    onError("No se pudo registrar la venta en el servidor.")
-                    Log.e(TAG, "Error HTTP al registrar venta. Código: ${response.code()}, Detalles: $errorBodyStr")
+                    onError(getApplication<Application>().getString(R.string.error_register_sale_failed))
                 }
 
             } catch (e: Exception) {
-                onError("Error de red al registrar venta: ${e.localizedMessage}")
-                Log.e(TAG, "Excepción crítica al registrar venta: ${e.localizedMessage}", e)
-            } finally {
-                Log.d(TAG, "=== FIN registerSale ===")
+                onError(getApplication<Application>().getString(R.string.error_network_register_sale, e.localizedMessage))
             }
         }
     }
 
     fun loadStoreProducts() {
         viewModelScope.launch {
-            Log.d(TAG, "=== INICIO loadStoreProducts ===")
             try {
                 val sharedPreferences = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
                 val storeId = sharedPreferences.getInt("STORE_ID", -1)
-                Log.d(TAG, "STORE_ID recuperado para cargar productos: $storeId")
 
                 if (storeId != -1) {
                     isLoadingProducts = true
                     productErrorMessage = null
 
-                    Log.d(TAG, "Realizando llamada Retrofit getProductsByStore con storeId: $storeId")
                     val response = RetrofitClient.instance.getProductsByStore(storeId)
-                    Log.d(TAG, "Respuesta recibida de getProductsByStore. Código HTTP: ${response.code()}")
 
                     if (response.code() == 401 || response.code() == 403) {
-                        Log.w(TAG, "Sesión expirada al cargar productos (${response.code()}). Cerrando sesión local...")
                         cerrarSesionLocal()
-                        productErrorMessage = "Sesión expirada o usuario inactivo."
+                        productErrorMessage = getApplication<Application>().getString(R.string.error_session_expired)
                         return@launch
                     }
 
                     if (response.isSuccessful) {
                         productList = response.body() ?: emptyList()
-                        Log.d(TAG, "Productos cargados correctamente. Total en lista: ${productList.size}")
                     } else {
-                        val errorBodyStr = response.errorBody()?.string() ?: "Sin detalles"
-                        val errorMsg = "Error del servidor al obtener productos: ${response.code()}"
-                        productErrorMessage = errorMsg
-                        Log.e(TAG, "$errorMsg - Detalles: $errorBodyStr")
+                        productErrorMessage = getApplication<Application>().getString(R.string.error_products_load_failed, response.code())
                     }
-                } else {
-                    Log.w(TAG, "Aviso: STORE_ID es -1, no se pueden cargar los productos.")
                 }
             } catch (e: Exception) {
-                val errorMsg = "Excepción de red al cargar productos: ${e.localizedMessage}"
-                productErrorMessage = errorMsg
-                Log.e(TAG, errorMsg, e)
+                productErrorMessage = getApplication<Application>().getString(R.string.error_network_products_load, e.localizedMessage)
             } finally {
                 isLoadingProducts = false
-                Log.d(TAG, "=== FIN loadStoreProducts ===")
             }
         }
     }
 
     fun cerrarSesionLocal(onLoggedOut: (() -> Unit)? = null) {
-        Log.i(TAG, "=== INICIO cerrarSesionLocal ===")
         val sharedPreferences = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
-
-        val editor = sharedPreferences.edit()
-        editor.remove("JWT_TOKEN")
-        editor.remove("USER_ID")
-        editor.remove("STORE_ID")
-        editor.apply()
-        Log.d(TAG, "Credenciales eliminadas de SharedPreferences (JWT_TOKEN, USER_ID, STORE_ID).")
-
+        with(sharedPreferences.edit()) {
+            remove("JWT_TOKEN")
+            remove("USER_ID")
+            remove("STORE_ID")
+            apply()
+        }
         RetrofitClient.context = null
-        Log.i(TAG, "Sesión local limpiada correctamente. RetrofitClient.context reiniciado a null.")
-
         onLoggedOut?.invoke()
-        Log.i(TAG, "=== FIN cerrarSesionLocal ===")
+    }
+
+    fun deleteSale(saleId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.instance.deleteSale(saleId)
+                if (response.isSuccessful) {
+                    onSuccess()
+                    loadStoreBalance()
+                } else {
+                    onError("No se pudo eliminar la venta.")
+                }
+            } catch (e: Exception) {
+                onError("Error de red: ${e.localizedMessage}")
+            }
+        }
     }
 }

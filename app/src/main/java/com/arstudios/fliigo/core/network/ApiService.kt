@@ -49,6 +49,11 @@ interface ApiService {
         @Body request: SaleRequest
     ): Response<SaleResponse>
 
+    @DELETE("api/sales/{id}")
+    suspend fun deleteSale(
+        @Path("id") saleId: Int
+    ): Response<Unit>
+
     // Obtener los productos de la tienda por su ID
     @GET("api/products/store/{storeId}")
     suspend fun getProductsByStore(

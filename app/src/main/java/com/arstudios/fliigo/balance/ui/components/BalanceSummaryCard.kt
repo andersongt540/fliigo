@@ -47,7 +47,7 @@ fun BalanceSummaryCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "$ ${String.format(Locale.US, "%.1f", balance)}",
+                    text = stringResource(R.string.currency_format, String.format(Locale.US, "%.1f", balance)),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = textoOscuro
@@ -68,11 +68,11 @@ fun BalanceSummaryCard(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🟢 ", fontSize = 10.sp)
+                    Text(stringResource(R.string.income_indicator), fontSize = 10.sp)
                     Column {
                         Text(stringResource(R.string.total_sales), fontSize = 11.sp, color = Color.Gray)
                         Text(
-                            "$ ${String.format(Locale.US, "%.1f", totalIncome)}",
+                            text = stringResource(R.string.currency_format, String.format(Locale.US, "%.1f", totalIncome)),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = verdeExito
@@ -80,11 +80,11 @@ fun BalanceSummaryCard(
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🔴 ", fontSize = 10.sp)
+                    Text(stringResource(R.string.expense_indicator), fontSize = 10.sp)
                     Column {
                         Text(stringResource(R.string.total_expenses), fontSize = 11.sp, color = Color.Gray)
                         Text(
-                            "$ ${String.format(Locale.US, "%.1f", totalExpenses)}",
+                            text = stringResource(R.string.currency_format, String.format(Locale.US, "%.1f", totalExpenses)),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = rojoGasto

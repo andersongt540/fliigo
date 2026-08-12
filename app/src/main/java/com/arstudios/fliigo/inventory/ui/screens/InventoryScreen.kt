@@ -190,7 +190,7 @@ fun InventoryScreen(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Edit,
-                                                contentDescription = "Editar",
+                                                contentDescription = stringResource(R.string.btn_edit),
                                                 tint = Color(0xFF1976D2),
                                                 modifier = Modifier.size(20.dp)
                                             )
@@ -208,7 +208,7 @@ fun InventoryScreen(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Delete,
-                                                contentDescription = "Eliminar",
+                                                contentDescription = stringResource(R.string.btn_delete),
                                                 tint = Color(0xFFD32F2F),
                                                 modifier = Modifier.size(20.dp)
                                             )
@@ -265,7 +265,7 @@ fun InventoryScreen(
 
                                             Column(horizontalAlignment = Alignment.End) {
                                                 Text(
-                                                    text = "$ ${String.format(Locale.US, "%.2f", product.price)}",
+                                                    text = stringResource(R.string.currency_format, String.format(Locale.US, "%.2f", product.price)),
                                                     fontWeight = FontWeight.Bold,
                                                     fontSize = 14.sp,
                                                     color = verdeExito

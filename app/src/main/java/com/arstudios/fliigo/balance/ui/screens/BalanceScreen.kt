@@ -1,5 +1,6 @@
 package com.arstudios.fliigo.balance.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -19,23 +21,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arstudios.fliigo.R
-import com.arstudios.fliigo.balance.ui.components.BalanceHeader
-import com.arstudios.fliigo.balance.ui.components.BalanceSummaryCard
-import com.arstudios.fliigo.balance.ui.components.RegisterSaleDialog
-import com.arstudios.fliigo.balance.ui.components.SaleItemCard
+import com.arstudios.fliigo.balance.data.SaleItem
+import com.arstudios.fliigo.balance.ui.components.*
 import com.arstudios.fliigo.balance.viewmodel.BalanceUiState
 import com.arstudios.fliigo.balance.viewmodel.BalanceViewModel
+import com.arstudios.fliigo.core.ui.components.BarcodeScannerView
 
 @Composable
 fun BalanceScreen(
     modifier: Modifier = Modifier,
     viewModel: BalanceViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val state = viewModel.uiState
     val productErrorMessage = viewModel.productErrorMessage
     val isLoadingProducts = viewModel.isLoadingProducts
 
-    var showRegisterScreen by remember { mutableStateOf(false) }
+    var showRegisterDialog by remember { mutableStateOf(false) }
+    var saleToViewInvoice by remember { mutableStateOf<SaleItem?>(null) }
+    var saleToDelete by remember { mutableStateOf<SaleItem?>(null) }
+    val saleDeletedSuccessMessage = stringResource(R.string.sale_deleted_success)
 
     val fondoVerde = colorResource(R.color.fondo_verde)
     val amarilloHeader = colorResource(R.color.amarillo_header)
@@ -56,7 +61,6 @@ fun BalanceScreen(
                 else -> stringResource(R.string.store_name)
             }
 
-            // Componente de la barra superior
             BalanceHeader(
                 storeTitle = storeTitle,
                 amarilloHeader = amarilloHeader
@@ -125,7 +129,6 @@ fun BalanceScreen(
                                 }
                             }
 
-                            // Componente de la tarjeta de resumen financiero
                             BalanceSummaryCard(
                                 balance = state.balance,
                                 totalIncome = state.totalIncome,
@@ -178,11 +181,12 @@ fun BalanceScreen(
                                     contentPadding = PaddingValues(bottom = 80.dp)
                                 ) {
                                     items(state.salesList) { sale ->
-                                        // Componente de cada item de venta reciente
                                         SaleItemCard(
                                             sale = sale,
                                             textoOscuro = textoOscuro,
-                                            verdeExito = verdeExito
+                                            verdeExito = verdeExito,
+                                            onViewInvoice = { saleToViewInvoice = sale },
+                                            onDeleteSale = { saleToDelete = sale }
                                         )
                                     }
                                 }
@@ -193,33 +197,82 @@ fun BalanceScreen(
             }
         }
 
-        if (!showRegisterScreen) {
-            FloatingActionButton(
-                onClick = {
-                    viewModel.loadStoreProducts()
-                    showRegisterScreen = true
+        FloatingActionButton(
+            onClick = {
+                viewModel.loadStoreProducts()
+                showRegisterDialog = true
+            },
+            containerColor = botonesOscuros,
+            contentColor = Color.White,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = stringResource(R.string.cd_register_sale_fab)
+            )
+        }
+
+        if (showRegisterDialog) {
+            RegisterSaleDialog(
+                onDismiss = {
+                    showRegisterDialog = false
+                    viewModel.loadStoreBalance()
                 },
-                containerColor = botonesOscuros,
-                contentColor = Color.White,
+                onOpenBarcodeScanner = { rowIndex: Int ->
+                    viewModel.updateActiveRowIndex(rowIndex)
+                    viewModel.setScannerModalVisibility(true)
+                },
+                viewModel = viewModel
+            )
+        }
+
+        if (viewModel.showScannerModal) {
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(24.dp)
+                    .fillMaxSize()
+                    .background(Color.Black)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(R.string.cd_register_sale_fab)
+                BarcodeScannerView(
+                    onBarcodeDetected = { scannedCode ->
+                        val activeIdx = viewModel.activeRowIndex
+                        if (activeIdx != null && scannedCode.isNotBlank()) {
+                            viewModel.deliverScannedCode(activeIdx, scannedCode)
+                        }
+                        viewModel.setScannerModalVisibility(false)
+                    }
                 )
             }
         }
 
-        // Llamada al Dialog de Registro de Venta
-        if (showRegisterScreen) {
-            RegisterSaleDialog(
-                onDismiss = {
-                    showRegisterScreen = false
-                    viewModel.loadStoreBalance()
+        // --- DIÁLOGO DE FACTURA ---
+        if (saleToViewInvoice != null && state is BalanceUiState.Success) {
+            InvoiceDialog(
+                sale = saleToViewInvoice!!,
+                storeName = state.storeName,
+                onDismiss = { saleToViewInvoice = null }
+            )
+        }
+
+        // --- DIÁLOGO DE CONFIRMACIÓN DE ELIMINACIÓN ---
+        if (saleToDelete != null) {
+            DeleteSaleConfirmationDialog(
+                onConfirm = {
+                    val sId = saleToDelete!!.id
+                    viewModel.deleteSale(
+                        saleId = sId,
+                        onSuccess = {
+                            Toast.makeText(context, saleDeletedSuccessMessage, Toast.LENGTH_SHORT).show()
+                            saleToDelete = null
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                            saleToDelete = null
+                        }
+                    )
                 },
-                viewModel = viewModel
+                onDismiss = { saleToDelete = null }
             )
         }
     }

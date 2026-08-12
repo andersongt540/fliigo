@@ -55,14 +55,14 @@ dependencies {
     // Corrutinas para llamadas asíncronas
     implementation(libs.kotlinx.coroutines.android)
 
-    // --- CameraX para el manejo de la cámara ---
-    implementation("androidx.camera:camera-core:1.3.1")
-    implementation("androidx.camera:camera-camera2:1.3.1")
-    implementation("androidx.camera:camera-lifecycle:1.3.1")
-    implementation("androidx.camera:camera-view:1.3.1")
+    // --- CameraX para el manejo de la cámara (Actualizado a 1.4.0) ---
+    implementation("androidx.camera:camera-core:1.4.0")
+    implementation("androidx.camera:camera-camera2:1.4.0")
+    implementation("androidx.camera:camera-lifecycle:1.4.0")
+    implementation("androidx.camera:camera-view:1.4.0")
 
-    // --- Google ML Kit Barcode Scanning ---
-    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    // --- Google ML Kit Barcode Scanning (Actualizado a 17.3.0 para soporte 16 KB) ---
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

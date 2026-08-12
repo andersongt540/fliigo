@@ -6,9 +6,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.arstudios.fliigo.R
 import com.arstudios.fliigo.inventory.data.CategoryDto
 import com.arstudios.fliigo.inventory.data.ProductDto
 
@@ -31,7 +33,7 @@ fun EditProductDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Editar Producto") },
+        title = { Text(stringResource(R.string.edit_product_title)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -40,7 +42,7 @@ fun EditProductDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nombre") },
+                    label = { Text(stringResource(R.string.product_name_label)) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -53,7 +55,7 @@ fun EditProductDialog(
                     OutlinedTextField(
                         value = priceStr,
                         onValueChange = { priceStr = it },
-                        label = { Text("Precio ($)") },
+                        label = { Text(stringResource(R.string.price_label)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
@@ -62,7 +64,7 @@ fun EditProductDialog(
                     OutlinedTextField(
                         value = costPriceStr,
                         onValueChange = { costPriceStr = it },
-                        label = { Text("Costo ($)") },
+                        label = { Text(stringResource(R.string.cost_price_label)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
@@ -77,7 +79,7 @@ fun EditProductDialog(
                     OutlinedTextField(
                         value = stockStr,
                         onValueChange = { stockStr = it },
-                        label = { Text("Stock") },
+                        label = { Text(stringResource(R.string.plain_stock_label)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
@@ -86,7 +88,7 @@ fun EditProductDialog(
                     OutlinedTextField(
                         value = provider,
                         onValueChange = { provider = it },
-                        label = { Text("Proveedor") },
+                        label = { Text(stringResource(R.string.provider_label)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f)
@@ -99,10 +101,10 @@ fun EditProductDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     OutlinedTextField(
-                        value = selectedCategory ?: "Seleccionar Categoría",
+                        value = selectedCategory ?: stringResource(R.string.select_category_label),
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Categoría") },
+                        label = { Text(stringResource(R.string.plain_category_label)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategory) },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -136,15 +138,19 @@ fun EditProductDialog(
             }
         },
         confirmButton = {
+            val errorValidName = stringResource(R.string.error_valid_name)
+            val errorInvalidPrice = stringResource(R.string.error_invalid_price)
+            val errorInvalidStock = stringResource(R.string.error_invalid_stock)
+
             TextButton(onClick = {
                 val price = priceStr.toDoubleOrNull()
                 val costPrice = costPriceStr.toDoubleOrNull()
                 val stock = stockStr.toIntOrNull()
 
                 when {
-                    name.isBlank() -> errorMessage = "Ingresa un nombre válido"
-                    price == null || price <= 0.0 -> errorMessage = "Precio inválido"
-                    stock == null || stock < 0 -> errorMessage = "Stock inválido"
+                    name.isBlank() -> errorMessage = errorValidName
+                    price == null || price <= 0.0 -> errorMessage = errorInvalidPrice
+                    stock == null || stock < 0 -> errorMessage = errorInvalidStock
                     else -> {
                         onSave(
                             name.trim(),
@@ -157,12 +163,12 @@ fun EditProductDialog(
                     }
                 }
             }) {
-                Text("Actualizar")
+                Text(stringResource(R.string.btn_update))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )

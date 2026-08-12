@@ -2,20 +2,17 @@
 <resources>
     <string name="app_name">fliigo</string>
 
-    <!-- Balance Screen -->
-    <string name="profile_desc">Perfil</string>
-    <string name="store_name">Tienda AR</string>
-    <string name="owner_role">Propietario</string>
-    <string name="help_desc">Ayuda</string>
-    <string name="notifications_desc">Notificaciones</string>
-    <string name="calendar_desc">Calendario</string>
-    <string name="today_year">Hoy, Año %1$s</string>
-    <string name="prev_year_desc">Anterior</string>
-    <string name="next_year_desc">Siguiente</string>
-    <string name="search_desc">Buscar</string>
-    <string name="download_desc">Descargar</string>
-    <string name="transaction_sale_label">VP</string>
-    <string name="transaction_sale_desc">Venta de producto</string>
+    <!-- Global / Common -->
+    <string name="btn_save">Guardar</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="btn_retry">Reintentar</string>
+    <string name="btn_close">Cerrar</string>
+    <string name="btn_update">Actualizar</string>
+    <string name="btn_edit">Editar</string>
+    <string name="btn_delete">Eliminar</string>
+    <string name="cd_close">Cerrar</string>
+    <string name="cd_delete_item">Eliminar</string>
+    <string name="cd_scan_barcode">Escanear código de barras</string>
 
     <!-- Auth Screen -->
     <string name="welcome_title">¡Bienvenido A!</string>
@@ -32,7 +29,7 @@
     <string name="go_to_login">¿Ya tienes cuenta? Inicia sesión</string>
     <string name="back_to_register">Volver al registro</string>
 
-    <!-- Textos para el Cuestionario de Creación de Tienda -->
+    <!-- Store Setup -->
     <string name="setup_store_title">Configura tu Negocio</string>
     <string name="setup_store_subtitle">Personaliza tu espacio de trabajo</string>
     <string name="store_details_header">Datos del Local</string>
@@ -42,42 +39,77 @@
     <string name="store_phone_label">Teléfono del local</string>
     <string name="btn_save_store">Crear Tienda y Acceder</string>
 
-    <!-- Textos Específicos para Balance y Ventas Diarias -->
+    <!-- Balance Screen -->
+    <string name="profile_desc">Perfil</string>
+    <string name="store_name">Tienda AR</string>
+    <string name="owner_role">Propietario</string>
+    <string name="help_desc">Ayuda</string>
+    <string name="notifications_desc">Notificaciones</string>
+    <string name="calendar_desc">Calendario</string>
+    <string name="today_year">Hoy, Año %1$s</string>
+    <string name="prev_year_desc">Anterior</string>
+    <string name="next_year_desc">Siguiente</string>
+    <string name="search_desc">Buscar</string>
+    <string name="download_desc">Descargar</string>
+    <string name="transaction_sale_label">VP</string>
+    <string name="transaction_sale_desc">Venta de producto</string>
     <string name="label_today_utility">Utilidad de Hoy</string>
     <string name="total_sales">Ventas Totales</string>
     <string name="total_expenses">Gastos Totales</string>
     <string name="title_recent_sales">Ventas Recientes de Hoy</string>
     <string name="empty_sales_message">No hay ventas registradas hoy</string>
-    <string name="btn_retry">Reintentar</string>
-
-    <!-- Diálogo Moderno de Registro de Venta -->
-    <string name="dialog_register_sale_title">Registrar Nueva Venta</string>
-    <string name="dialog_register_sale_subtitle">Completa los datos del cliente y producto</string>
-    <string name="dialog_product_select_hint">Selecciona un producto</string>
-    <string name="dialog_product_field_label">Producto</string>
-    <string name="dialog_client_name_label">Nombre del Cliente</string>
-    <string name="dialog_quantity_label">Cant.</string>
-    <string name="dialog_phone_label">Teléfono</string>
-    <string name="dialog_address_label">Dirección / Entrega</string>
-    <string name="error_empty_client">Ingresa el nombre del cliente</string>
-    <string name="error_select_product">Selecciona un producto</string>
-    <string name="error_invalid_quantity">La cantidad debe ser mayor a 0</string>
-    <string name="cd_register_sale_fab">Registrar Venta</string>
-
-    <!-- Navegación Inferior (Bottom Bar) -->
-    <string name="nav_balance">Balance</string>
-    <string name="nav_debt">Deuda</string>
-    <string name="nav_stats">Estadística</string>
-    <string name="nav_inventory">Inventario</string>
-    <string name="nav_profile">Perfil</string>
-    <string name="label_receivable">Por Cobrar</string>
-    <string name="label_payable">Por Pagar</string>
-    <string name="label_clients">Clientes</string>
+    <string name="label_total_utility">Utilidad Total</string>
+    <string name="label_total_sales">Ventas Totales</string>
+    <string name="label_total_expenses">Gastos Totales</string>
     <string name="search_hint">Buscar registro..</string>
-    <string name="btn_sale">VENTA</string>
-    <string name="btn_expense">GASTO</string>
 
-    <!-- Módulo de Inventario y Categorías -->
+    <!-- Register Sale Dialog -->
+    <string name="register_sale_title">Registrar Venta</string>
+    <string name="client_name_label">Nombre Cliente</string>
+    <string name="address_label">Dirección</string>
+    <string name="phone_label">Teléfono</string>
+    <string name="products_label">Productos</string>
+    <string name="product_id_format">ID Prod #%d</string>
+    <string name="quantity_short_label">Cant</string>
+    <string name="btn_add_another_product">Agregar otro producto</string>
+    <string name="btn_register_sale">Registrar Venta</string>
+    <string name="total_sale_label">Total de la Venta:</string>
+    <string name="hint_enter_code">Ingrese código o escanee</string>
+    <string name="price_subtotal_format">Precio: $%1$s | Subtotal: $%2$s</string>
+    <string name="error_empty_client">Ingresa el nombre del cliente</string>
+    <string name="error_no_products">Hay filas de productos sin código o ID</string>
+    <string name="error_invalid_prod_qty">ID de producto o cantidad inválidos</string>
+    <string name="error_product_not_found">Producto no encontrado</string>
+    <string name="error_insufficient_stock">Stock insuficiente para %1$s. Disponibles: %2$d</string>
+    <string name="sale_registered_success">Venta registrada con éxito</string>
+    <string name="error_user_not_identified">Usuario no identificado.</string>
+    <string name="error_session_expired">La sesión ha expirado o el usuario ya no existe.</string>
+    <string name="error_balance_load_failed">No se pudo cargar el balance desde el servidor.</string>
+    <string name="error_network_generic">Error de red: %1$s</string>
+    <string name="error_store_not_identified">Error: Tienda no identificada.</string>
+    <string name="error_register_sale_failed">No se pudo registrar la venta en el servidor.</string>
+    <string name="error_network_register_sale">Error de red al registrar venta: %1$s</string>
+    <string name="error_products_load_failed">Error del servidor al obtener productos: %1$d</string>
+    <string name="error_network_products_load">Excepción de red al cargar productos: %1$s</string>
+    <string name="title_invoice">Factura de Venta</string>
+    <string name="invoice_client">Cliente: %1$s</string>
+    <string name="invoice_product">Producto: %1$s</string>
+    <string name="invoice_quantity">Cantidad: %1$d</string>
+    <string name="invoice_total">Total: %1$s</string>
+    <string name="invoice_address">Dirección: %1$s</string>
+    <string name="invoice_phone">Teléfono: %1$s</string>
+    <string name="invoice_date">Fecha: %1$s</string>
+    <string name="btn_share_whatsapp">Compartir WhatsApp</string>
+    <string name="btn_share_email">Compartir Correo</string>
+    <string name="dialog_delete_sale_title">Eliminar Venta</string>
+    <string name="dialog_delete_sale_message">¿Estás seguro de que deseas eliminar esta venta? Esta acción no se puede deshacer.</string>
+    <string name="btn_delete_confirm">Eliminar definitivamente</string>
+    <string name="cd_invoice">Ver Factura</string>
+    <string name="cd_delete_sale">Eliminar Venta</string>
+    <string name="sale_deleted_success">Venta eliminada con éxito</string>
+    <string name="invoice_share_text">Factura de %1$s\nCliente: %2$s\nProducto: %3$s\nCantidad: %4$d\nTotal: %5$s\nFecha: %6$s</string>
+
+    <!-- Inventory Screen -->
     <string name="inventory_title">INVENTARIO</string>
     <string name="inventory_subtitle">Gestión de Stock y Categorías</string>
     <string name="inventory_total_products">Productos Totales en Stock</string>
@@ -85,53 +117,48 @@
     <string name="category_label">Categoría: %1$s</string>
     <string name="category_general">General</string>
     <string name="stock_label">Stock: %1$d</string>
-
-    <!-- Diálogos y Botones de Inventario -->
-    <string name="dialog_create_category_title">Crear Categoría</string>
-    <string name="dialog_category_hint">Nombre de la categoría</string>
-    <string name="dialog_register_product_title">Registrar Producto</string>
-    <string name="dialog_product_name_hint">Nombre</string>
-    <string name="dialog_product_price_hint">Precio</string>
-    <string name="dialog_product_stock_hint">Stock inicial</string>
-    <string name="btn_save">Guardar</string>
-    <string name="btn_cancel">Cancelar</string>
     <string name="cd_create_category">Crear Categoría</string>
     <string name="cd_register_product">Registrar Producto</string>
-
-    <!-- Inventario - Encabezado -->
-    <string name="inventory_categories_products_title">Categorías y Productos</string>
-    <string name="inventory_empty_state">No hay categorías ni productos registrados.</string>
-    <string name="inventory_empty_category">Sin productos en esta categoría</string>
-    <string name="inventory_stock_label">Stock: %d</string>
+    <string name="dialog_create_category_title">Crear Categoría</string>
+    <string name="dialog_category_hint">Nombre de la categoría</string>
     <string name="inventory_price_format">$ %.2f</string>
+    <string name="currency_format">$ %1$s</string>
+    <string name="income_indicator">🟢 </string>
+    <string name="expense_indicator">🔴 </string>
 
-    <!-- Descripciones de Botones Flotantes -->
-    <string name="fab_create_category_desc">Crear Categoría</string>
-    <string name="fab_register_product_desc">Registrar Producto</string>
+    <!-- Register/Edit Product -->
+    <string name="register_product_title">Registrar Producto</string>
+    <string name="edit_product_title">Editar Producto</string>
+    <string name="product_name_label">Nombre</string>
+    <string name="price_label">Precio ($)</string>
+    <string name="cost_price_label">Costo ($)</string>
+    <string name="plain_stock_label">Stock</string>
+    <string name="provider_label">Proveedor</string>
+    <string name="select_category_label">Seleccionar Categoría</string>
+    <string name="plain_category_label">Categoría</string>
+    <string name="error_valid_name">Ingresa un nombre válido</string>
+    <string name="error_invalid_price">Precio inválido</string>
+    <string name="error_invalid_stock">Stock inválido</string>
+    <string name="product_registered_success">Producto registrado con éxito</string>
 
-    <!-- Diálogo: Crear Categoría -->
-    <string name="dialog_category_title">Nueva Categoría</string>
-    <string name="dialog_category_label">Nombre de la categoría</string>
-    <string name="dialog_btn_save">Guardar</string>
-    <string name="dialog_btn_cancel">Cancelar</string>
+    <!-- Bottom Navigation -->
+    <string name="nav_balance">Balance</string>
+    <string name="nav_debt">Deuda</string>
+    <string name="nav_stats">Estadística</string>
+    <string name="nav_inventory">Inventario</string>
+    <string name="nav_profile">Perfil</string>
 
-    <!-- Diálogo: Registrar Producto -->
-    <string name="dialog_product_title">Registrar Producto</string>
-    <string name="dialog_product_name_label">Nombre del Producto</string>
-    <string name="dialog_product_category_label">Categoría</string>
-    <string name="dialog_product_price_label">Precio de Venta ($)</string>
-    <string name="dialog_product_cost_label">Precio de Costo ($)</string>
-    <string name="dialog_product_provider_label">Proveedor (Opcional)</string>
-    <string name="dialog_product_stock_label">Cantidad / Stock</string>
-    <string name="dialog_btn_register">Registrar</string>
+    <!-- Debt Screen -->
+    <string name="label_receivable">Por Cobrar</string>
+    <string name="label_payable">Por Pagar</string>
+    <string name="label_clients">Clientes</string>
+    <string name="btn_sale">VENTA</string>
+    <string name="btn_expense">GASTO</string>
+    <string name="cd_register_sale_fab">Registrar Venta</string>
 
-    <!-- Diálogo: Detalle del Producto -->
-    <string name="product_detail_id">ID del Producto: %s</string>
-    <string name="product_detail_category">Categoría: %s</string>
-    <string name="product_detail_sale_price">Precio de Venta: $ %.2f</string>
-    <string name="product_detail_cost_price">Precio de Costo: $ %.2f</string>
-    <string name="product_detail_provider">Proveedor: %s</string>
-    <string name="product_detail_stock">Cantidad en Stock: %d</string>
-    <string name="product_detail_provider_fallback">No especificado</string>
-    <string name="dialog_btn_close">Cerrar</string>
+    <!-- Logout -->
+    <string name="dialog_logout_title">Cerrar Sesión</string>
+    <string name="dialog_logout_message">¿Estás seguro de que deseas cerrar la sesión?</string>
+    <string name="btn_logout">Cerrar Sesión</string>
+    <string name="toast_back_to_exit">Presiona de nuevo para salir</string>
 </resources>
