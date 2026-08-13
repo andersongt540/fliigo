@@ -21,11 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arstudios.fliigo.R
+import com.arstudios.fliigo.balance.data.GroupedSale
 import com.arstudios.fliigo.balance.data.SaleItem
 import com.arstudios.fliigo.balance.ui.components.*
 import com.arstudios.fliigo.balance.viewmodel.BalanceUiState
 import com.arstudios.fliigo.balance.viewmodel.BalanceViewModel
-import com.arstudios.fliigo.core.ui.components.BarcodeScannerView
+import com.arstudios.fliigo.core.ui.components.BarcodeScannerModal
 
 @Composable
 fun BalanceScreen(
@@ -38,8 +39,8 @@ fun BalanceScreen(
     val isLoadingProducts = viewModel.isLoadingProducts
 
     var showRegisterDialog by remember { mutableStateOf(false) }
-    var saleToViewInvoice by remember { mutableStateOf<SaleItem?>(null) }
-    var saleToDelete by remember { mutableStateOf<SaleItem?>(null) }
+    var saleToViewInvoice by remember { mutableStateOf<GroupedSale?>(null) }
+    var saleToDelete by remember { mutableStateOf<GroupedSale?>(null) }
     val saleDeletedSuccessMessage = stringResource(R.string.sale_deleted_success)
 
     val fondoVerde = colorResource(R.color.fondo_verde)
@@ -229,21 +230,16 @@ fun BalanceScreen(
         }
 
         if (viewModel.showScannerModal) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-            ) {
-                BarcodeScannerView(
-                    onBarcodeDetected = { scannedCode ->
-                        val activeIdx = viewModel.activeRowIndex
-                        if (activeIdx != null && scannedCode.isNotBlank()) {
-                            viewModel.deliverScannedCode(activeIdx, scannedCode)
-                        }
-                        viewModel.setScannerModalVisibility(false)
+            BarcodeScannerModal(
+                onDismiss = { viewModel.setScannerModalVisibility(false) },
+                onBarcodeDetected = { scannedCode ->
+                    val activeIdx = viewModel.activeRowIndex
+                    if (activeIdx != null && scannedCode.isNotBlank()) {
+                        viewModel.deliverScannedCode(activeIdx, scannedCode)
                     }
-                )
-            }
+                    viewModel.setScannerModalVisibility(false)
+                }
+            )
         }
 
         // --- DIÁLOGO DE FACTURA ---
@@ -259,9 +255,8 @@ fun BalanceScreen(
         if (saleToDelete != null) {
             DeleteSaleConfirmationDialog(
                 onConfirm = {
-                    val sId = saleToDelete!!.id
-                    viewModel.deleteSale(
-                        saleId = sId,
+                    viewModel.deleteGroupedSale(
+                        groupedSale = saleToDelete!!,
                         onSuccess = {
                             Toast.makeText(context, saleDeletedSuccessMessage, Toast.LENGTH_SHORT).show()
                             saleToDelete = null

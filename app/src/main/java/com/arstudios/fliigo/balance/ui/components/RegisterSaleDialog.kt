@@ -50,15 +50,33 @@ fun RegisterSaleDialog(
     val textoOscuro = colorResource(R.color.texto_oscuro)
 
     val calculatedSubtotals = productRows.map { row ->
-        val pIdInt = row.productId.toIntOrNull()
+        val inputCode = row.productId.trim()
         val qty = row.quantity.toIntOrNull() ?: 0
-        val product = viewModel.productList.find { it.id == pIdInt }
+
+        var product = viewModel.productList.find { it.barcode == inputCode }
+        if (product == null) {
+            val pIdInt = inputCode.toIntOrNull()
+            if (pIdInt != null) {
+                product = viewModel.productList.find { it.id == pIdInt }
+            }
+        }
+
         val unitPrice = product?.price ?: 0.0
         val totalRow = unitPrice * qty
         Triple(product, unitPrice, totalRow)
     }
 
     val grandTotal = calculatedSubtotals.sumOf { it.third }
+
+    // Escuchar cambios en el código escaneado desde el ViewModel
+    LaunchedEffect(viewModel.lastScannedBarcode) {
+        viewModel.lastScannedBarcode?.let { (index, code) ->
+            if (index in productRows.indices) {
+                productRows[index] = productRows[index].copy(productId = code)
+            }
+            viewModel.clearScannedBarcode()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -172,11 +190,10 @@ fun RegisterSaleDialog(
                                         onValueChange = { newValue ->
                                             productRows[index] = row.copy(productId = newValue)
                                         },
-                                        label = { Text(stringResource(R.string.product_id_format, index + 1)) },
+                                        label = { Text("ID o Código") },
                                         modifier = Modifier.weight(2f),
                                         singleLine = true,
-                                        shape = RoundedCornerShape(12.dp),
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                        shape = RoundedCornerShape(12.dp)
                                     )
 
                                     IconButton(

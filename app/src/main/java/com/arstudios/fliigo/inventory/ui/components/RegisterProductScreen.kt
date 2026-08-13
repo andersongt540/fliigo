@@ -21,7 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arstudios.fliigo.R
-import com.arstudios.fliigo.core.ui.components.BarcodeScannerView
+import com.arstudios.fliigo.core.ui.components.BarcodeScannerModal
 import com.arstudios.fliigo.inventory.data.CategoryDto
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,20 +56,13 @@ fun RegisterProductScreen(
     )
 
     if (showScanner) {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-            BarcodeScannerView(
-                onBarcodeDetected = { code ->
-                    productId = code
-                    showScanner = false
-                }
-            )
-            IconButton(
-                onClick = { showScanner = false },
-                modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
-            ) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White)
+        BarcodeScannerModal(
+            onDismiss = { showScanner = false },
+            onBarcodeDetected = { code ->
+                productId = code
+                showScanner = false
             }
-        }
+        )
     } else {
         Scaffold(
             topBar = {

@@ -291,7 +291,7 @@ fun InventoryScreen(
                 product = productToEdit!!,
                 categories = categories,
                 onDismiss = { productToEdit = null },
-                onSave = { name, price, costPrice, provider, stock, category ->
+                onSave = { name, price, costPrice, provider, stock, category, barcode ->
                     productToEdit?.id?.let { id ->
                         viewModel.updateProduct(
                             productId = id,
@@ -300,7 +300,8 @@ fun InventoryScreen(
                             costPrice = costPrice,
                             provider = provider,
                             stock = stock,
-                            category = category
+                            category = category,
+                            barcode = barcode
                         ) {
                             productToEdit = null
                         }

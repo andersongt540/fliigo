@@ -40,6 +40,8 @@ import java.util.concurrent.Executors
 
 fun BarcodeScannerView(
 
+    modifier: Modifier = Modifier,
+
     onBarcodeDetected: (String) -> Unit
 
 ) {
@@ -62,7 +64,7 @@ fun BarcodeScannerView(
 
     AndroidView(
 
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier,
 
         factory = { ctx ->
 

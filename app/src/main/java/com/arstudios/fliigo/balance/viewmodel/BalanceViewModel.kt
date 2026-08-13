@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.arstudios.fliigo.R
 import com.arstudios.fliigo.inventory.data.ProductDto
+import com.arstudios.fliigo.balance.data.GroupedSale
 import com.arstudios.fliigo.balance.data.SaleItem
 import com.arstudios.fliigo.balance.data.SaleRequest
 import com.arstudios.fliigo.core.network.RetrofitClient
@@ -26,7 +27,7 @@ sealed interface BalanceUiState {
         val balance: Double,
         val totalIncome: Double,
         val totalExpenses: Double,
-        val salesList: List<SaleItem> = emptyList()
+        val salesList: List<GroupedSale> = emptyList()
     ) : BalanceUiState
     data class Error(val message: String) : BalanceUiState
 }
@@ -110,11 +111,21 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
                 if (response.isSuccessful && response.body() != null) {
                     val data = response.body()!!
                     
-                    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    val today = sdf.format(Date())
-                    Log.d(TAG, "Filtrando ventas para el día: $today")
+                    val serverSdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).apply {
+                        timeZone = TimeZone.getTimeZone("UTC") // El server guarda en UTC
+                    }
+                    val localSdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val todayLocal = localSdf.format(Date())
+
+                    Log.d(TAG, "Día local del teléfono: $todayLocal")
 
                     val mappedSales = data.sales?.map { dto ->
+                        // Intentamos convertir la fecha del servidor (UTC) a la local del teléfono
+                        val localDateString = try {
+                            val dateObj = serverSdf.parse(dto.date ?: "")
+                            if (dateObj != null) localSdf.format(dateObj) else ""
+                        } catch (_: Exception) { "" }
+
                         SaleItem(
                             id = dto.id ?: 0,
                             productName = dto.productName ?: "Sin producto",
@@ -123,9 +134,26 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
                             date = dto.date ?: "",
                             address = dto.address ?: "",
                             phone = dto.phone ?: "",
-                            quantity = dto.quantity ?: 1
+                            quantity = dto.quantity ?: 1,
+                            localDay = localDateString // Campo auxiliar para filtrar
                         )
-                    }?.filter { it.date.startsWith(today) } ?: emptyList()
+                    }?.filter { it.localDay == todayLocal } ?: emptyList()
+
+                    // Agrupar ventas por fecha exacta y cliente
+                    val groupedSales = mappedSales.groupBy { it.date + it.clientName }
+                        .map { (key, items) ->
+                            val first = items.first()
+                            GroupedSale(
+                                clientName = first.clientName,
+                                date = first.date,
+                                address = first.address,
+                                phone = first.phone,
+                                items = items,
+                                totalAmount = items.sumOf { it.amount }
+                            )
+                        }
+
+                    Log.d(TAG, "Ventas encontradas para hoy local: ${groupedSales.size} grupos")
 
                     uiState = BalanceUiState.Success(
                         storeName = data.storeName ?: "Tienda AR",
@@ -133,7 +161,7 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
                         balance = data.balance ?: 0.0,
                         totalIncome = data.totalIncome ?: 0.0,
                         totalExpenses = data.totalExpenses ?: 0.0,
-                        salesList = mappedSales
+                        salesList = groupedSales
                     )
                 } else {
                     uiState = BalanceUiState.Error(getApplication<Application>().getString(R.string.error_balance_load_failed))
@@ -154,6 +182,7 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        Log.d(TAG, "registerSaleWithValidation: client=$clientName, rows=${productRows.size}")
         val app = getApplication<Application>()
         if (clientName.isBlank()) {
             onError(app.getString(R.string.error_empty_client))
@@ -165,34 +194,55 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
             return
         }
 
-        for (row in productRows) {
-            val pIdInt = row.productId.toIntOrNull()
-            val requestedQty = row.quantity.toIntOrNull() ?: 0
+        val validatedItems = mutableListOf<com.arstudios.fliigo.balance.data.SaleItemRequest>()
 
-            if (pIdInt == null || requestedQty <= 0) {
+        for (row in productRows) {
+            val inputCode = row.productId.trim()
+            val requestedQty = row.quantity.toIntOrNull() ?: 0
+            Log.d(TAG, "Validando fila: inputCode=$inputCode, qty=$requestedQty")
+
+            if (inputCode.isBlank() || requestedQty <= 0) {
                 onError(app.getString(R.string.error_invalid_prod_qty))
                 return
             }
 
-            val matchedProduct = productList.find { it.id == pIdInt }
+            // Buscar por barcode primero, luego por ID
+            var matchedProduct = productList.find { it.barcode == inputCode }
             if (matchedProduct == null) {
+                Log.d(TAG, "No se encontró por barcode, intentando por ID...")
+                val pIdInt = inputCode.toIntOrNull()
+                if (pIdInt != null) {
+                    matchedProduct = productList.find { it.id == pIdInt }
+                }
+            }
+
+            if (matchedProduct == null) {
+                Log.e(TAG, "Producto no encontrado para el código: $inputCode")
                 onError(app.getString(R.string.error_product_not_found))
                 return
             }
 
+            Log.d(TAG, "Producto encontrado: ${matchedProduct.name}, stock actual=${matchedProduct.stock}")
+
             if (matchedProduct.stock < requestedQty) {
+                Log.e(TAG, "Stock insuficiente para ${matchedProduct.name}")
                 onError(app.getString(R.string.error_insufficient_stock, matchedProduct.name, matchedProduct.stock))
                 return
             }
+            
+            matchedProduct.id?.let { 
+                validatedItems.add(com.arstudios.fliigo.balance.data.SaleItemRequest(it, requestedQty))
+            }
         }
 
-        val firstRow = productRows.first()
+        if (validatedItems.isEmpty()) return
+
+        Log.d(TAG, "Validación exitosa (${validatedItems.size} ítems). Procediendo a registrar venta...")
         registerSale(
             clientName = clientName,
             address = address,
             phone = phone,
-            productId = firstRow.productId.toInt(),
-            quantity = firstRow.quantity.toInt(),
+            items = validatedItems,
             onSuccess = onSuccess,
             onError = onError
         )
@@ -202,17 +252,18 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
         clientName: String,
         address: String,
         phone: String,
-        productId: Int,
-        quantity: Int,
+        items: List<com.arstudios.fliigo.balance.data.SaleItemRequest>,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        Log.d(TAG, "registerSale: items=${items.size}")
         viewModelScope.launch {
             try {
                 val sharedPreferences = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
                 val storeId = sharedPreferences.getInt("STORE_ID", -1)
 
                 if (storeId == -1) {
+                    Log.e(TAG, "Error: storeId no encontrado")
                     onError(getApplication<Application>().getString(R.string.error_store_not_identified))
                     return@launch
                 }
@@ -222,11 +273,12 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
                     clientName = clientName,
                     address = address,
                     phone = phone,
-                    productId = productId,
-                    quantity = quantity
+                    items = items
                 )
 
+                Log.d(TAG, "Enviando SaleRequest: $request")
                 val response = RetrofitClient.instance.registerSale(request)
+                Log.d(TAG, "registerSale: Respuesta cod=${response.code()} isSuccessful=${response.isSuccessful}")
 
                 if (response.code() == 401 || response.code() == 403) {
                     cerrarSesionLocal()
@@ -235,21 +287,25 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
                 }
 
                 if (response.isSuccessful) {
+                    Log.d(TAG, "Venta registrada con éxito")
                     onSuccess()
                     delay(500)
                     loadStoreBalance()
                     loadStoreProducts()
                 } else {
+                    Log.e(TAG, "Error al registrar venta: ${response.errorBody()?.string()}")
                     onError(getApplication<Application>().getString(R.string.error_register_sale_failed))
                 }
 
             } catch (e: Exception) {
+                Log.e(TAG, "registerSale EXCEPTION: ${e.localizedMessage}")
                 onError(getApplication<Application>().getString(R.string.error_network_register_sale, e.localizedMessage))
             }
         }
     }
 
     fun loadStoreProducts() {
+        Log.d(TAG, "loadStoreProducts: Cargando lista de productos...")
         viewModelScope.launch {
             try {
                 val sharedPreferences = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
@@ -260,6 +316,7 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
                     productErrorMessage = null
 
                     val response = RetrofitClient.instance.getProductsByStore(storeId)
+                    Log.d(TAG, "loadStoreProducts: Respuesta cod=${response.code()}")
 
                     if (response.code() == 401 || response.code() == 403) {
                         cerrarSesionLocal()
@@ -269,11 +326,14 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
 
                     if (response.isSuccessful) {
                         productList = response.body() ?: emptyList()
+                        Log.d(TAG, "loadStoreProducts: ${productList.size} productos cargados")
                     } else {
+                        Log.e(TAG, "Error al cargar productos: ${response.errorBody()?.string()}")
                         productErrorMessage = getApplication<Application>().getString(R.string.error_products_load_failed, response.code())
                     }
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "loadStoreProducts EXCEPTION: ${e.localizedMessage}")
                 productErrorMessage = getApplication<Application>().getString(R.string.error_network_products_load, e.localizedMessage)
             } finally {
                 isLoadingProducts = false
@@ -293,15 +353,26 @@ class BalanceViewModel(application: Application) : AndroidViewModel(application)
         onLoggedOut?.invoke()
     }
 
-    fun deleteSale(saleId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun deleteGroupedSale(groupedSale: GroupedSale, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.instance.deleteSale(saleId)
-                if (response.isSuccessful) {
+                var allSuccess = true
+                var lastError = ""
+                
+                // Eliminamos cada ítem de la venta agrupada
+                groupedSale.items.forEach { item ->
+                    val response = RetrofitClient.instance.deleteSale(item.id)
+                    if (!response.isSuccessful) {
+                        allSuccess = false
+                        lastError = "Error al eliminar ${item.productName}"
+                    }
+                }
+
+                if (allSuccess) {
                     onSuccess()
                     loadStoreBalance()
                 } else {
-                    onError("No se pudo eliminar la venta.")
+                    onError(lastError)
                 }
             } catch (e: Exception) {
                 onError("Error de red: ${e.localizedMessage}")

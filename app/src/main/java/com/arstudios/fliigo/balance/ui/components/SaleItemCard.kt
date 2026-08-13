@@ -1,5 +1,6 @@
 package com.arstudios.fliigo.balance.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -8,6 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,24 +20,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arstudios.fliigo.R
-import com.arstudios.fliigo.balance.data.SaleItem
+import com.arstudios.fliigo.balance.data.GroupedSale
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 @Composable
 fun SaleItemCard(
-    sale: SaleItem,
+    sale: GroupedSale,
     textoOscuro: Color,
     verdeExito: Color,
     onViewInvoice: () -> Unit,
     onDeleteSale: () -> Unit
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
     val maxRevealPx = with(density) { 140.dp.toPx() }
@@ -46,15 +49,15 @@ fun SaleItemCard(
             .clip(RoundedCornerShape(12.dp))
     ) {
         // --- ACCIONES DETRÁS (SE REVELAN AL SWIPE) ---
+        // Solo permitimos swipe si NO está expandido
         Row(
             modifier = Modifier
                 .matchParentSize()
-                .background(Color(0xFFEF5350)) // Fondo rojo para indicar eliminación
+                .background(Color(0xFFEF5350))
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Botón Ver Factura
             IconButton(
                 onClick = {
                     coroutineScope.launch { offsetX.animateTo(0f) }
@@ -64,14 +67,8 @@ fun SaleItemCard(
                     .size(40.dp)
                     .background(Color.White, CircleShape)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Receipt,
-                    contentDescription = stringResource(R.string.cd_invoice),
-                    tint = Color(0xFF1976D2),
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(Icons.Default.Receipt, contentDescription = null, tint = Color(0xFF1976D2), modifier = Modifier.size(20.dp))
             }
-            // Botón Eliminar
             IconButton(
                 onClick = {
                     coroutineScope.launch { offsetX.animateTo(0f) }
@@ -81,12 +78,7 @@ fun SaleItemCard(
                     .size(40.dp)
                     .background(Color.White, CircleShape)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.cd_delete_sale),
-                    tint = Color(0xFFD32F2F),
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFD32F2F), modifier = Modifier.size(20.dp))
             }
         }
 
@@ -95,54 +87,102 @@ fun SaleItemCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .offset { IntOffset(offsetX.value.toInt(), 0) }
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onHorizontalDrag = { _, dragAmount ->
-                            coroutineScope.launch {
-                                val newOffset = (offsetX.value + dragAmount).coerceIn(-maxRevealPx, 0f)
-                                offsetX.snapTo(newOffset)
-                            }
-                        },
-                        onDragEnd = {
-                            coroutineScope.launch {
-                                if (offsetX.value < -maxRevealPx / 2) {
-                                    offsetX.animateTo(-maxRevealPx)
-                                } else {
-                                    offsetX.animateTo(0f)
+                .pointerInput(isExpanded) {
+                    // Si está expandido, no permitimos el gesto de deslizar
+                    if (!isExpanded) {
+                        detectHorizontalDragGestures(
+                            onHorizontalDrag = { _, dragAmount ->
+                                coroutineScope.launch {
+                                    val newOffset = (offsetX.value + dragAmount).coerceIn(-maxRevealPx, 0f)
+                                    offsetX.snapTo(newOffset)
+                                }
+                            },
+                            onDragEnd = {
+                                coroutineScope.launch {
+                                    if (offsetX.value < -maxRevealPx / 2) offsetX.animateTo(-maxRevealPx)
+                                    else offsetX.animateTo(0f)
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 },
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = sale.productName,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = textoOscuro
-                    )
-                    Text(
-                        text = sale.clientName,
-                        fontSize = 13.sp,
-                        color = Color.Gray
-                    )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = sale.clientName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = textoOscuro
+                        )
+                        Text(
+                            text = if (sale.items.size == 1) sale.items.first().productName else "${sale.items.size} productos",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "$ ${String.format(Locale.US, "%.2f", sale.totalAmount)}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = verdeExito
+                        )
+                        
+                        if (sale.items.size > 1) {
+                            IconButton(onClick = { isExpanded = !isExpanded }) {
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = null,
+                                    tint = textoOscuro
+                                )
+                            }
+                        } else {
+                            // Espacio para mantener alineación si solo hay 1 producto
+                            Spacer(modifier = Modifier.width(48.dp))
+                        }
+                    }
                 }
-                Text(
-                    text = "$ ${String.format(Locale.US, "%.1f", sale.amount)}",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = verdeExito
-                )
+
+                AnimatedVisibility(visible = isExpanded) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF8F8F8))
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        sale.items.forEach { item ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "${item.productName} (x${item.quantity})",
+                                    fontSize = 13.sp,
+                                    color = textoOscuro,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = "$ ${String.format(Locale.US, "%.2f", item.amount)}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = textoOscuro
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

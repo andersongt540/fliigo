@@ -84,6 +84,7 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         barcode: String? = null,
         onComplete: () -> Unit = {}
     ) {
+        Log.d(TAG, "registerProduct: name=$name, barcode=$barcode, price=$price")
         viewModelScope.launch {
             try {
                 val storeId = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE).getInt("STORE_ID", -1)
@@ -97,21 +98,31 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
                     category = category,
                     barcode = barcode
                 )
+                Log.d(TAG, "registerProduct: Enviando DTO=$productDto")
                 val response = RetrofitClient.instance.registerProduct(productDto)
+                Log.d(TAG, "registerProduct: Respuesta cod=${response.code()} isSuccessful=${response.isSuccessful}")
                 if (response.isSuccessful) {
                     loadInventoryData()
                     onComplete()
+                } else {
+                    Log.e(TAG, "registerProduct ERROR: ${response.errorBody()?.string()}")
                 }
-            } catch (e: Exception) { /* Log error */ }
+            } catch (e: Exception) {
+                Log.e(TAG, "registerProduct EXCEPTION: ${e.localizedMessage}")
+            }
         }
     }
 
     fun deleteProduct(productId: Int) {
+        Log.d(TAG, "deleteProduct: id=$productId")
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.instance.deleteProduct(productId)
+                Log.d(TAG, "deleteProduct: Respuesta cod=${response.code()}")
                 if (response.isSuccessful) loadInventoryData()
-            } catch (e: Exception) { /* Log error */ }
+            } catch (e: Exception) {
+                Log.e(TAG, "deleteProduct EXCEPTION: ${e.localizedMessage}")
+            }
         }
     }
 
@@ -123,8 +134,10 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         provider: String?,
         stock: Int,
         category: String?,
+        barcode: String? = null,
         onComplete: () -> Unit = {}
     ) {
+        Log.d(TAG, "updateProduct: id=$productId, name=$name, barcode=$barcode")
         viewModelScope.launch {
             try {
                 val storeId = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE).getInt("STORE_ID", -1)
@@ -136,14 +149,21 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
                     costPrice = costPrice ?: 0.0,
                     provider = provider ?: "",
                     stock = stock,
-                    category = category
+                    category = category,
+                    barcode = barcode
                 )
+                Log.d(TAG, "updateProduct: Enviando DTO=$productDto")
                 val response = RetrofitClient.instance.updateProduct(productId, productDto)
+                Log.d(TAG, "updateProduct: Respuesta cod=${response.code()} isSuccessful=${response.isSuccessful}")
                 if (response.isSuccessful) {
                     loadInventoryData()
                     onComplete()
+                } else {
+                    Log.e(TAG, "updateProduct ERROR: ${response.errorBody()?.string()}")
                 }
-            } catch (e: Exception) { /* Log error */ }
+            } catch (e: Exception) {
+                Log.e(TAG, "updateProduct EXCEPTION: ${e.localizedMessage}")
+            }
         }
     }
 }

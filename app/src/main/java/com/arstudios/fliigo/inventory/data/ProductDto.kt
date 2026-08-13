@@ -1,19 +1,21 @@
 package com.arstudios.fliigo.inventory.data
 
+import com.google.gson.annotations.SerializedName
+
 data class CategoryDto(
-    val id: Int? = null,
-    val storeId: Int,
-    val name: String
+    @SerializedName("id") val id: Int? = null,
+    @SerializedName("storeId") val storeId: Int,
+    @SerializedName("name") val name: String
 )
 
 data class ProductDto(
-    val id: Int? = null,
-    val barcode: String? = null,  // Nuevo campo para código de barras manual o escaneado
-    val storeId: Int,
-    val name: String,
-    val price: Double,
-    val costPrice: Double? = 0.0,
-    val provider: String? = "",
-    val stock: Int,
-    val category: String?
+    @SerializedName("id") val id: Int? = null,
+    @SerializedName("barcode") val barcode: String? = null,
+    @SerializedName("storeId") val storeId: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("price") val price: Double,
+    @SerializedName("costPrice") val costPrice: Double? = 0.0,
+    @SerializedName("provider") val provider: String? = "",
+    @SerializedName("stock") val stock: Int,
+    @SerializedName("category") val category: String?
 )

@@ -20,13 +20,14 @@ fun EditProductDialog(
     product: ProductDto,
     categories: List<CategoryDto>,
     onDismiss: () -> Unit,
-    onSave: (name: String, price: Double, costPrice: Double?, provider: String?, stock: Int, category: String?) -> Unit
+    onSave: (name: String, price: Double, costPrice: Double?, provider: String?, stock: Int, category: String?, barcode: String?) -> Unit
 ) {
     var name by remember { mutableStateOf(product.name) }
     var priceStr by remember { mutableStateOf(product.price.toString()) }
     var costPriceStr by remember { mutableStateOf(product.costPrice?.toString() ?: "") }
     var provider by remember { mutableStateOf(product.provider ?: "") }
     var stockStr by remember { mutableStateOf(product.stock.toString()) }
+    var barcode by remember { mutableStateOf(product.barcode ?: "") }
     var selectedCategory by remember { mutableStateOf(product.category) }
     var expandedCategory by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -46,6 +47,16 @@ fun EditProductDialog(
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = barcode,
+                    onValueChange = { barcode = it },
+                    label = { Text(stringResource(R.string.label_product_id)) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Escanee o ingrese código") }
                 )
 
                 Row(
@@ -158,7 +169,8 @@ fun EditProductDialog(
                             costPrice,
                             provider.ifBlank { null },
                             stock,
-                            selectedCategory
+                            selectedCategory,
+                            barcode.ifBlank { null }
                         )
                     }
                 }
