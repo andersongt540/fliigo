@@ -8,6 +8,5 @@ data class SaleItem(
     val date: String,
     val address: String,
     val phone: String,
-    val quantity: Int,
-    val localDay: String = ""
+    val quantity: Int
 )

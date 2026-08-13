@@ -169,6 +169,17 @@
     <string name="btn_sale">VENTA</string>
     <string name="btn_expense">GASTO</string>
     <string name="cd_register_sale_fab">Registrar Venta</string>
+    <string name="dialog_add_debt_receivable">Nueva Cuenta por Cobrar</string>
+    <string name="dialog_add_debt_payable">Nueva Cuenta por Pagar</string>
+    <string name="label_debt_client">Nombre del Cliente/Proveedor</string>
+    <string name="label_debt_amount">Monto ($)</string>
+    <string name="label_debt_description">Descripción / Concepto</string>
+    <string name="debt_registered_success">Registro guardado exitosamente</string>
+    <string name="debt_marked_paid_success">Registro marcado como pagado</string>
+    <string name="debt_deleted_success">Registro eliminado</string>
+    <string name="dialog_delete_debt_title">Eliminar Registro</string>
+    <string name="dialog_delete_debt_message">¿Estás seguro de que deseas eliminar este registro de deuda? Esta acción no se puede deshacer.</string>
+    <string name="btn_delete_debt_confirm">Eliminar definitivamente</string>
 
     <!-- Logout -->
     <string name="dialog_logout_title">Cerrar Sesión</string>

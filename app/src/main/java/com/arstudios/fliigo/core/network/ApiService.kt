@@ -49,6 +49,11 @@ interface ApiService {
         @Body request: SaleRequest
     ): Response<SaleResponse>
 
+    @GET("api/sales/clients/{storeId}")
+    suspend fun getUniqueClients(
+        @Path("storeId") storeId: Int
+    ): Response<List<com.arstudios.fliigo.debt.data.ClientSuggestionDto>>
+
     @DELETE("api/sales/{id}")
     suspend fun deleteSale(
         @Path("id") saleId: Int
@@ -90,4 +95,31 @@ interface ApiService {
     suspend fun getCategoriesByStore(
         @Path("storeId") storeId: Int
     ): Response<List<CategoryDto>>
+
+    // --- DEUDAS ---
+    @GET("api/debts/store/{storeId}")
+    suspend fun getDebtsByStore(
+        @Path("storeId") storeId: Int
+    ): Response<List<com.arstudios.fliigo.debt.data.DebtDto>>
+
+    @POST("api/debts/register")
+    suspend fun registerDebt(
+        @Body debt: com.arstudios.fliigo.debt.data.DebtDto
+    ): Response<Unit>
+
+    @DELETE("api/debts/{id}")
+    suspend fun deleteDebt(
+        @Path("id") debtId: Int
+    ): Response<Unit>
+
+    @PUT("api/debts/{id}/pay")
+    suspend fun markDebtAsPaid(
+        @Path("id") debtId: Int
+    ): Response<Unit>
+
+    // --- ESTADÍSTICAS ---
+    @GET("api/stats/{storeId}")
+    suspend fun getStoreStats(
+        @Path("storeId") storeId: Int
+    ): Response<com.arstudios.fliigo.stats.data.StatsResponse>
 }

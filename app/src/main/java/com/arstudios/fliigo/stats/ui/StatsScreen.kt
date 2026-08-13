@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,14 +20,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arstudios.fliigo.R
 import com.arstudios.fliigo.core.theme.AmarilloHeader
 import com.arstudios.fliigo.core.theme.FondoVerde
 import com.arstudios.fliigo.core.theme.TextoOscuro
+import com.arstudios.fliigo.stats.viewmodel.StatsViewModel
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: StatsViewModel = viewModel()
 ) {
     val grisFondo = colorResource(R.color.gris_fondo)
     val botonesOscuros = colorResource(R.color.botones_oscuros)
@@ -81,52 +87,73 @@ fun StatsScreen(
             shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
             colors = CardDefaults.cardColors(containerColor = grisFondo)
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            PullToRefreshBox(
+                isRefreshing = viewModel.isRefreshing,
+                onRefresh = { viewModel.loadStats(refreshing = true) },
+                modifier = Modifier.fillMaxSize()
             ) {
-                item {
-                    Text(
-                        text = "Resumen de Rendimiento",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = TextoOscuro
-                    )
-                }
-
-                item {
-                    StatCard(
-                        title = "Ventas Totales del Mes",
-                        value = "$ 0.00",
-                        icon = Icons.Default.Timeline,
-                        color = Color(0xFF1976D2)
-                    )
-                }
-
-                item {
-                    StatCard(
-                        title = "Utilidad Bruta",
-                        value = "$ 0.00",
-                        icon = Icons.Default.Timeline,
-                        color = Color(0xFF4CAF50)
-                    )
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { /* Generar PDF/Excel */ },
+                if (viewModel.isLoading && !viewModel.isRefreshing) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = botonesOscuros)
+                    }
+                } else if (viewModel.errorMessage != null) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = viewModel.errorMessage!!, color = MaterialTheme.colorScheme.error)
+                            Button(onClick = { viewModel.loadStats() }) {
+                                Text(stringResource(R.string.btn_retry))
+                            }
+                        }
+                    }
+                } else {
+                    LazyColumn(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = botonesOscuros)
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Icon(Icons.Default.Download, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Generar Reporte Detallado", fontWeight = FontWeight.Bold)
+                        item {
+                            Text(
+                                text = "Resumen de Rendimiento",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = TextoOscuro
+                            )
+                        }
+
+                        item {
+                            StatCard(
+                                title = "Ventas Totales del Mes",
+                                value = "$ ${String.format(Locale.US, "%.2f", viewModel.totalSalesMonth)}",
+                                icon = Icons.Default.Timeline,
+                                color = Color(0xFF1976D2)
+                            )
+                        }
+
+                        item {
+                            StatCard(
+                                title = "Utilidad Bruta Estimada",
+                                value = "$ ${String.format(Locale.US, "%.2f", viewModel.grossUtility)}",
+                                icon = Icons.Default.Timeline,
+                                color = Color(0xFF4CAF50)
+                            )
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = { /* Generar PDF/Excel */ },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = botonesOscuros)
+                            ) {
+                                Icon(Icons.Default.Download, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Generar Reporte Detallado", fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }

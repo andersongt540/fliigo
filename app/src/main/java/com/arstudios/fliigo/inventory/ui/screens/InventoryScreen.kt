@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,7 @@ import com.arstudios.fliigo.inventory.viewmodel.InventoryViewModel
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InventoryScreen(
     modifier: Modifier = Modifier,
@@ -109,116 +111,121 @@ fun InventoryScreen(
                 shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
                 colors = CardDefaults.cardColors(containerColor = grisFondo)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                PullToRefreshBox(
+                    isRefreshing = viewModel.isRefreshing,
+                    onRefresh = { viewModel.loadInventoryData(refreshing = true) },
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(
-                        text = stringResource(R.string.inventory_total_products),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = textoOscuro
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.inventory_total_products),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = textoOscuro
+                        )
 
-                    if (uiState.isLoading) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = botonesOscuros)
-                        }
-                    } else if (products.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = stringResource(R.string.inventory_empty_list),
-                                fontSize = 13.sp,
-                                color = Color.Gray
-                            )
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(bottom = 80.dp)
-                        ) {
-                            items(
-                                items = products,
-                                key = { it.id ?: it.name }
-                            ) { product ->
-                                val defaultCategory = stringResource(R.string.category_general)
-                                val categoryName = product.category ?: defaultCategory
+                        if (uiState.isLoading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = botonesOscuros)
+                            }
+                        } else if (products.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.inventory_empty_list),
+                                    fontSize = 13.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(bottom = 80.dp)
+                            ) {
+                                items(
+                                    items = products,
+                                    key = { it.id ?: it.name }
+                                ) { product ->
+                                    val defaultCategory = stringResource(R.string.category_general)
+                                    val categoryName = product.category ?: defaultCategory
 
-                                val density = LocalDensity.current
-                                val maxRevealPx = with(density) { 140.dp.toPx() }
-                                val offsetX = remember { Animatable(0f) }
-                                val coroutineScope = rememberCoroutineScope()
+                                    val density = LocalDensity.current
+                                    val maxRevealPx = with(density) { 140.dp.toPx() }
+                                    val offsetX = remember { Animatable(0f) }
+                                    val coroutineScope = rememberCoroutineScope()
 
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                ) {
-                                    // --- BOTONES DE EDICIÓN Y ELIMINACIÓN ---
-                                    Row(
-                                        modifier = Modifier
-                                            .matchParentSize()
-                                            .background(Color(0xFFEF5350))
-                                            .padding(horizontal = 16.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        IconButton(
-                                            onClick = {
-                                                coroutineScope.launch { offsetX.animateTo(0f) }
-                                                productToEdit = product
-                                            },
-                                            modifier = Modifier
-                                                .size(40.dp)
-                                                .background(Color.White, CircleShape)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Edit,
-                                                contentDescription = stringResource(R.string.btn_edit),
-                                                tint = Color(0xFF1976D2),
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                        IconButton(
-                                            onClick = {
-                                                coroutineScope.launch { offsetX.animateTo(0f) }
-                                                product.id?.let { productId ->
-                                                    viewModel.deleteProduct(productId)
-                                                }
-                                            },
-                                            modifier = Modifier
-                                                .size(40.dp)
-                                                .background(Color.White, CircleShape)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = stringResource(R.string.btn_delete),
-                                                tint = Color(0xFFD32F2F),
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
-
-                                    // --- TARJETA PRINCIPAL DESLIZABLE ---
-                                    Card(
+                                    Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .offset { IntOffset(offsetX.value.toInt(), 0) }
+                                            .clip(RoundedCornerShape(12.dp))
+                                    ) {
+                                        // --- BOTONES DE EDICIÓN Y ELIMINACIÓN ---
+                                        Row(
+                                            modifier = Modifier
+                                                .matchParentSize()
+                                                .background(Color(0xFFEF5350))
+                                                .padding(horizontal = 16.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            IconButton(
+                                                onClick = {
+                                                    coroutineScope.launch { offsetX.animateTo(0f) }
+                                                    productToEdit = product
+                                                },
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .background(Color.White, CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Edit,
+                                                    contentDescription = stringResource(R.string.btn_edit),
+                                                    tint = Color(0xFF1976D2),
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                            IconButton(
+                                                onClick = {
+                                                    coroutineScope.launch { offsetX.animateTo(0f) }
+                                                    product.id?.let { productId ->
+                                                        viewModel.deleteProduct(productId)
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .background(Color.White, CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = stringResource(R.string.btn_delete),
+                                                    tint = Color(0xFFD32F2F),
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        }
+
+                                        // --- TARJETA PRINCIPAL DESLIZABLE ---
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .offset { IntOffset(offsetX.value.toInt(), 0) }
                                             .pointerInput(Unit) {
                                                 detectHorizontalDragGestures(
                                                     onHorizontalDrag = { _, dragAmount ->
@@ -238,42 +245,43 @@ fun InventoryScreen(
                                                     }
                                                 )
                                             },
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = CardDefaults.cardColors(containerColor = Color.White)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color.White)
                                         ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    text = product.name,
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 15.sp,
-                                                    color = textoOscuro
-                                                )
-                                                Text(
-                                                    text = stringResource(R.string.category_label, categoryName),
-                                                    fontSize = 12.sp,
-                                                    color = Color.Gray
-                                                )
-                                            }
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(12.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = product.name,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 15.sp,
+                                                        color = textoOscuro
+                                                    )
+                                                    Text(
+                                                        text = stringResource(R.string.category_label, categoryName),
+                                                        fontSize = 12.sp,
+                                                        color = Color.Gray
+                                                    )
+                                                }
 
-                                            Column(horizontalAlignment = Alignment.End) {
-                                                Text(
-                                                    text = stringResource(R.string.currency_format, String.format(Locale.US, "%.2f", product.price)),
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 14.sp,
-                                                    color = verdeExito
-                                                )
-                                                Text(
-                                                    text = stringResource(R.string.stock_label, product.stock),
-                                                    fontSize = 12.sp,
-                                                    color = Color.DarkGray
-                                                )
+                                                Column(horizontalAlignment = Alignment.End) {
+                                                    Text(
+                                                        text = stringResource(R.string.currency_format, String.format(Locale.US, "%.2f", product.price)),
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 14.sp,
+                                                        color = verdeExito
+                                                    )
+                                                    Text(
+                                                        text = stringResource(R.string.stock_label, product.stock),
+                                                        fontSize = 12.sp,
+                                                        color = Color.DarkGray
+                                                    )
+                                                }
                                             }
                                         }
                                     }

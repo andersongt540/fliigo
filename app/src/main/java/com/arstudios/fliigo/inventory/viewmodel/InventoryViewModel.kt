@@ -3,6 +3,9 @@ package com.arstudios.fliigo.inventory.viewmodel
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.arstudios.fliigo.inventory.data.CategoryDto
@@ -29,13 +32,17 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
     private val _uiState = MutableStateFlow(InventoryUiState())
     val uiState: StateFlow<InventoryUiState> = _uiState.asStateFlow()
 
+    var isRefreshing by mutableStateOf(false)
+        private set
+
     init {
         loadInventoryData()
     }
 
-    fun loadInventoryData() {
+    fun loadInventoryData(refreshing: Boolean = false) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            if (refreshing) isRefreshing = true else _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            
             try {
                 val prefs = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE)
                 val storeId = prefs.getInt("STORE_ID", -1)
@@ -56,6 +63,8 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage) }
+            } finally {
+                isRefreshing = false
             }
         }
     }
@@ -84,7 +93,6 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         barcode: String? = null,
         onComplete: () -> Unit = {}
     ) {
-        Log.d(TAG, "registerProduct: name=$name, barcode=$barcode, price=$price")
         viewModelScope.launch {
             try {
                 val storeId = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE).getInt("STORE_ID", -1)
@@ -98,31 +106,21 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
                     category = category,
                     barcode = barcode
                 )
-                Log.d(TAG, "registerProduct: Enviando DTO=$productDto")
                 val response = RetrofitClient.instance.registerProduct(productDto)
-                Log.d(TAG, "registerProduct: Respuesta cod=${response.code()} isSuccessful=${response.isSuccessful}")
                 if (response.isSuccessful) {
                     loadInventoryData()
                     onComplete()
-                } else {
-                    Log.e(TAG, "registerProduct ERROR: ${response.errorBody()?.string()}")
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "registerProduct EXCEPTION: ${e.localizedMessage}")
-            }
+            } catch (e: Exception) { /* Log error */ }
         }
     }
 
     fun deleteProduct(productId: Int) {
-        Log.d(TAG, "deleteProduct: id=$productId")
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.instance.deleteProduct(productId)
-                Log.d(TAG, "deleteProduct: Respuesta cod=${response.code()}")
                 if (response.isSuccessful) loadInventoryData()
-            } catch (e: Exception) {
-                Log.e(TAG, "deleteProduct EXCEPTION: ${e.localizedMessage}")
-            }
+            } catch (e: Exception) { /* Log error */ }
         }
     }
 
@@ -137,7 +135,6 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         barcode: String? = null,
         onComplete: () -> Unit = {}
     ) {
-        Log.d(TAG, "updateProduct: id=$productId, name=$name, barcode=$barcode")
         viewModelScope.launch {
             try {
                 val storeId = getApplication<Application>().getSharedPreferences("FliigoPrefs", Context.MODE_PRIVATE).getInt("STORE_ID", -1)
@@ -152,18 +149,12 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
                     category = category,
                     barcode = barcode
                 )
-                Log.d(TAG, "updateProduct: Enviando DTO=$productDto")
                 val response = RetrofitClient.instance.updateProduct(productId, productDto)
-                Log.d(TAG, "updateProduct: Respuesta cod=${response.code()} isSuccessful=${response.isSuccessful}")
                 if (response.isSuccessful) {
                     loadInventoryData()
                     onComplete()
-                } else {
-                    Log.e(TAG, "updateProduct ERROR: ${response.errorBody()?.string()}")
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "updateProduct EXCEPTION: ${e.localizedMessage}")
-            }
+            } catch (e: Exception) { /* Log error */ }
         }
     }
 }

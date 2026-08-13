@@ -1,4 +1,4 @@
-package com.arstudios.fliigo.balance.ui.components
+package com.arstudios.fliigo.debt.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
@@ -7,8 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,27 +18,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.arstudios.fliigo.R
-import com.arstudios.fliigo.balance.data.SaleItem
+import com.arstudios.fliigo.debt.data.DebtDto
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 @Composable
-fun SaleItemCard(
-    sale: SaleItem,
+fun DebtItemCard(
+    debt: DebtDto,
     textoOscuro: Color,
     verdeExito: Color,
-    onViewInvoice: () -> Unit,
-    onDeleteSale: () -> Unit
+    rojoGasto: Color,
+    onMarkAsPaid: () -> Unit,
+    onDelete: () -> Unit,
+    onSendReminder: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
-    val maxRevealPx = with(density) { 140.dp.toPx() }
+    val maxRevealPx = with(density) { 180.dp.toPx() } 
     val offsetX = remember { Animatable(0f) }
 
     Box(
@@ -54,27 +55,42 @@ fun SaleItemCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Botón Recordatorio (Azul)
+            if (!debt.phone.isNullOrBlank()) {
+                IconButton(
+                    onClick = {
+                        coroutineScope.launch { offsetX.animateTo(0f) }
+                        onSendReminder()
+                    },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color.White, CircleShape)
+                ) {
+                    Icon(Icons.Default.Send, contentDescription = null, tint = Color(0xFF1976D2), modifier = Modifier.size(20.dp))
+                }
+            }
+
             IconButton(
                 onClick = {
                     coroutineScope.launch { offsetX.animateTo(0f) }
-                    onViewInvoice()
+                    onMarkAsPaid()
                 },
                 modifier = Modifier
                     .size(40.dp)
                     .background(Color.White, CircleShape)
             ) {
-                Icon(Icons.Default.Receipt, contentDescription = stringResource(R.string.cd_invoice), tint = Color(0xFF1976D2), modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
             }
             IconButton(
                 onClick = {
                     coroutineScope.launch { offsetX.animateTo(0f) }
-                    onDeleteSale()
+                    onDelete()
                 },
                 modifier = Modifier
                     .size(40.dp)
                     .background(Color.White, CircleShape)
             ) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete_sale), tint = Color(0xFFD32F2F), modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFD32F2F), modifier = Modifier.size(20.dp))
             }
         }
 
@@ -111,24 +127,33 @@ fun SaleItemCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = sale.clientName,
+                        text = debt.clientName ?: "Sin nombre",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = textoOscuro
                     )
                     Text(
-                        text = sale.productName,
+                        text = debt.description ?: (if (debt.type == "receivable") "Por cobrar" else "Por pagar"),
                         fontSize = 12.sp,
-                        color = Color.Gray,
-                        maxLines = 1
+                        color = Color.Gray
                     )
                 }
-                Text(
-                    text = "$ ${String.format(Locale.US, "%.2f", sale.amount)}",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = verdeExito
-                )
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "$ ${String.format(Locale.US, "%.1f", debt.amount ?: 0.0)}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = if (debt.type == "receivable") verdeExito else rojoGasto
+                    )
+                    if (debt.createdAt != null) {
+                        Text(
+                            text = if (debt.createdAt.length >= 10) debt.createdAt.take(10) else debt.createdAt,
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
             }
         }
     }
